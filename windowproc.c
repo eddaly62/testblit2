@@ -112,6 +112,22 @@ int set_window_cursor_pos(struct WINDOW *w, int x, int y) {
     return 0;
 }
 
+
+// set tab stops
+// returns 0 if success, otherwise -1
+int set_window_tab_stops(struct WINDOW *w, struct TABS *hts, struct TABS *vts) {
+
+    if (w == NULL) {
+        fprintf(stderr, "window pointer is NULL\n");
+        return -1;
+    }
+
+    w->hts = hts;
+    w->vts = vts;
+    return 0;
+}
+
+
 // set active font for window
 // returns 0 if success, otherwise -1
 int set_window_font(struct WINDOW *w, struct FONT_LUT *fntlut) {
@@ -151,6 +167,11 @@ int set_window_defaults(struct WINDOW *w) {
         fprintf(stderr, "could not set cursor position\n");
         return -1;
     }
+    r = set_window_tab_stops(w, NULL, NULL);
+    if (r == -1) {
+        fprintf(stderr, "could not set tab stops\n");
+        return -1;
+    }
     w->fcp.scale = DEFAULT_WINDOW_SCALE;
     w->fcp.style = DEFAULT_WINDOW_STYLE;
 
@@ -175,6 +196,10 @@ int clear_window(struct WINDOW *w) {
     memset(&w->c, 0x0, (sizeof(struct CHARACTER)*MAX_CHARS_IN_WINDOW));
 
     w->charcnt = 0;
+    w->scrolloffsetx = 0;
+    w->scrolloffsety = 0;
+    set_window_cursor_pos(w, 0, 0);
+
 
     // todo - add graphic clearing code here
 
@@ -206,6 +231,19 @@ int new_line(struct WINDOW *w) {
 
     w->xcursor = 0;
     w->ycursor += w->flut->rec[0].rowcnt * w->fcp.scale;
+    return 0;
+}
+
+// move cursor to the start of the current line (carriage return)
+// returns 0 if success, otherwise -1
+int carriage_return(struct WINDOW *w) {
+
+    if (w == NULL) {
+        fprintf(stderr, "cursor position not updated, window pointer is NULL\n");
+        return -1;
+    }
+
+    w->xcursor = 0;
     return 0;
 }
 
@@ -242,6 +280,74 @@ int update_cursor_pos(struct WINDOW *w) {
     return 0;
 }
 
+// horizontal tab cursor
+// returns 0 if success, otherwise -1
+int htab_cursor_pos(struct WINDOW *w, struct TABS *ht, bool forward) {
+
+    int i;
+
+    if (w == NULL) {
+        return -1;
+    }
+
+    // if no tabs setting, do nothing to cursor position
+    if (ht == NULL) {
+        return 0;
+    }
+
+    if (forward == true) {
+        // tab forwards
+        for (i = 0; i < w->hts->numoftabstops; i++) {
+            if (w->xcursor < w->hts->ts[i]) {
+                w->xcursor = w->hts->ts[i];
+                return 0;
+            }
+        }
+        // past last tab stop, move cursor to next line
+        new_line(w);
+    }
+    else {
+        // tab backwards
+        for (i = w->hts->numoftabstops-1; i >= 0 ; i--) {
+            if (w->xcursor > w->hts->ts[i]) {
+                w->xcursor = w->hts->ts[i];
+                return 0;
+            }
+        }
+        // return cursor to the start of the line
+        carriage_return(w);
+    }
+    return 0;
+}
+
+// vertical tab cursor
+// returns 0 if success, otherwise -1
+int vtab_cursor_pos(struct WINDOW *w, struct TABS *vt) {
+
+    int i;
+
+    if (w == NULL) {
+        return -1;
+    }
+
+    // if no tabs setting, do nothing to cursor position
+    if (vt == NULL) {
+        return 0;
+    }
+
+    // tab down
+    for (i = 0; i < w->vts->numoftabstops; i++) {
+        if (w->ycursor < w->vts->ts[i]) {
+            w->ycursor = w->vts->ts[i];
+            return 0;
+        }
+    }
+    // past last tab stop
+    // todo - do what
+
+    return 0;
+}
+
 // print string to window
 // returns 0 if success, otherwise -1
 int dprint(struct WINDOW *w, char *s, unsigned char style) {
@@ -273,17 +379,28 @@ int dprint(struct WINDOW *w, char *s, unsigned char style) {
 
     for (i = 0; i < sl; i++) {
 
+        // get character
         c = t[i];
+
+        // process escape sequences
         if (c == '\n') {
             new_line(w);
             continue;
         }
         if (c == '\t') {
-            // todo add tab processing
+            htab_cursor_pos(w, w->hts, true);
             continue;
         }
         if (c == '\r') {
-            // todo add carriage return processing
+            carriage_return(w);
+            continue;
+        }
+        if (c == '\f') {
+            clear_window(w);
+            continue;
+        }
+        if (c == '\v') {
+            vtab_cursor_pos(w, w->vts);
             continue;
         }
 

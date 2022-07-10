@@ -29,10 +29,10 @@ extern "C" {
 #define RESOURCES_DIR "resources"
 
 // maximum number of character in a font file
-#define MAX_FONT_GLYPHS  150
+#define MAX_FONT_GLYPHS  100
 
 // maximum charcters in a window
-#define MAX_CHARS_IN_WINDOW (80*24)
+#define MAX_CHARS_IN_WINDOW (2*80*24)
 
 // maximum dprint string length
 #define MAX_PRINT_LINE  MAX_CHARS_IN_WINDOW
@@ -42,6 +42,9 @@ extern "C" {
 
 // window flags
 #define DEFAULT_WINDOW_FLAGS (ALLEGRO_NOFRAME)
+
+// number of horizontal tab stops
+#define MAX_TABS   5
 
 // font style
 extern const unsigned char INVERT;
@@ -61,8 +64,6 @@ extern const unsigned char BLINK_MASK_p125; // 1/8 of the fastest rate
 struct POSITION {
     float x0;
     float y0;
-//    float x1;
-//    float y1;
 };
 
 struct FONT_LUT_REC {
@@ -97,11 +98,16 @@ struct FONT_CHAR_PARAM {
 
 // contains everything the text processor needs to display a character
 struct CHARACTER {
-//    ALLEGRO_BITMAP *bmp;
     struct FONT_CHAR_PARAM fcp;
     struct FONT_REC fr;
     float x;
     float y;
+};
+
+// defintion for horizontal and vertical tab stop setting (pixels)
+struct TABS {
+    int numoftabstops;
+    float ts[];
 };
 
 struct WINDOW {
@@ -115,7 +121,7 @@ struct WINDOW {
     int winposx;                // position of window
     int winposy;
     unsigned char blinkcounter; // blink counter
-    unsigned char blinkdivisor; // mask for selecting blink rate divisor 
+    unsigned char blinkdivisor; // mask for selecting blink rate divisor
 
     // cursor
     float xcursor;              // cursor location
@@ -127,7 +133,8 @@ struct WINDOW {
     unsigned char cursorchar;   // cursor shape
 
     // tabs
-    // todo - tbd
+    struct TABS *hts;           // pointer to horizontal tab setting struct
+    struct TABS *vts;           // pointer to vertical tab setting struct
 
     // text
     struct FONT_LUT *flut;      // current active font
@@ -154,9 +161,13 @@ int set_window_colors(struct WINDOW *w, ALLEGRO_COLOR bgc, ALLEGRO_COLOR fgc);
 int set_window_cursor_pos(struct WINDOW *w, int x, int y);
 int set_window_defaults(struct WINDOW *w);
 int clear_window(struct WINDOW *w);
+int set_window_tab_stops(struct WINDOW *w, struct TABS *hts, struct TABS *vts);
 int set_window_font(struct WINDOW *w, struct FONT_LUT *fntlut);
 int new_line(struct WINDOW *w);
+int carriage_return(struct WINDOW *w);
 int update_cursor_pos(struct WINDOW *w);
+int htab_cursor_pos(struct WINDOW *w, struct TABS *ht, bool forward);
+int vtab_cursor_pos(struct WINDOW *w, struct TABS *vt);
 int dprint(struct WINDOW *w, char *s, unsigned char style);
 int window_update(struct WINDOW *w);
 void destroy_window(struct WINDOW *w);

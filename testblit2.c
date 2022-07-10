@@ -70,6 +70,10 @@ enum SETIME {START = 0, END = 1};
 
 struct timeval start, end;
 
+// set tabs
+struct TABS htab = {.numoftabstops = 4, .ts = 40, 80, 120, 160};
+struct TABS vtab = {.numoftabstops = 4, .ts = 100, 200, 300, 400};
+
 // Determine elapse time
 double elapsed_time(enum SETIME sts, struct timeval *start, struct timeval *end)
 {
@@ -173,16 +177,20 @@ int main()  {
     if (r == -1) {
         fprintf(stderr, "could not set font\n");
     }
+    r = set_window_tab_stops(win, &htab, &vtab);
+    if (r == -1) {
+        fprintf(stderr, "could not set tabs\n");
+    }
 
     al_register_event_source(q, al_get_display_event_source(win->display));
     al_register_event_source(q, al_get_timer_event_source(timer));
 
     r = dprint(win, "0123456789\n", NO_STYLE);
     r = dprint(win, " !\"#$%&'()*+,-./\n", NO_STYLE);
-    r = dprint(win, "abcdefghijklmnopqrstuvwxyz\n", NO_STYLE);
-    r = dprint(win, ":;<=>?@\n", NO_STYLE);
-    r = dprint(win, "ABCDEFGHIJKLMNOPQRSTUVWXYZ\n", NO_STYLE);
-    r = dprint(win, "[\\]^_`{|}~\177\n\n", NO_STYLE);
+    r = dprint(win, "\vabcdefghijklmnopqrstuvwxyz\n", NO_STYLE);
+    r = dprint(win, "\t:;<=>?@\n", NO_STYLE);
+    r = dprint(win, "\t\tABCDEFGHIJKLMNOPQRSTUVWXYZ\n", NO_STYLE);
+    r = dprint(win, "\t\t\t[\\]^_`{|}~\177\n\n", NO_STYLE);
 
     r = dprint(win, "0123456789\n", BLINK);
     r = dprint(win, " !\"#$%&'()*+,-./\n", BLINK);
@@ -196,7 +204,7 @@ int main()  {
     r = dprint(win, "abcdefghijklmnopqrstuvwxyz\n", INVERT);
     r = dprint(win, ":;<=>?@\n", INVERT);
     r = dprint(win, "ABCDEFGHIJKLMNOPQRSTUVWXYZ\n", INVERT);
-    r = dprint(win, "[\\]^_`{|}~\177\n\n", INVERT);
+    r = dprint(win, "[\\]^_`{|}~\177\n\n\r", INVERT);
 
     r = dprint(win, "0123456789\n", UNDER_SCORE);
     r = dprint(win, " !\"#$%&'()*+,-./\n", UNDER_SCORE);

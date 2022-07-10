@@ -1,6 +1,6 @@
 // font_5x7r.c
 
-char *font_design_5_7_rulings =
+const char *font_design_5_7_rulings =
 "@`"
 "---x-="
 "---x-="

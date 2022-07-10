@@ -1,6 +1,6 @@
 // font_10x14.c
 
-char *font_design_10_14 =
+const char *font_design_10_14 =
 "@ "
 "-----------="
 "-----------="
