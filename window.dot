@@ -1,0 +1,30 @@
+graph {
+    WINDOW -- DISPLAY
+    WINDOW -- CURSOR
+    WINDOW -- TABS
+    WINDOW -- TEXT
+    WINDOW -- GRAPHICS
+    DISPLAY -- ALLEGRO_DISPLAY display
+    DISPLAY -- ALLEGRO_COLOR winbgcolor
+    DISPLAY -- ALLEGRO_COLOR winfgcolor
+    DISPLAY -- width
+    DISPLAY -- height
+    DISPLAY -- winposx
+    DISPLAY -- winposy
+    DISPLAY -- blinkcounter
+    DISPLAY -- blinkdivisor
+    CURSOR -- xcursor
+    CURSOR -- ycursor
+    CURSOR -- scrolloffsetx
+    CURSOR -- scrolloffsety
+    CURSOR -- pixperline
+    CURSOR -- cursorstyle
+    CURSOR -- cursorchar
+    TABS -- hts
+    TABS -- vts
+    TEXT -- flut
+    TEXT -- fcp
+    TEXT -- charcnt
+    TEXT -- CHARACTER
+    CHARACTER -- c
+}
