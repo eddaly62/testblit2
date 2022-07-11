@@ -11,8 +11,6 @@
 #include <errno.h>
 
 #include <allegro5/allegro.h>
-#include <allegro5/allegro_font.h>
-//#include <allegro5/allegro_ttf.h>
 #include <allegro5/allegro_primitives.h>
 #include <allegro5/allegro_image.h>
 
@@ -275,11 +273,13 @@ int update_cursor_pos(struct WINDOW *w) {
     return 0;
 }
 
-// horizontal tab cursor
+// horizontal tab cursor backwards
 // returns 0 if success, otherwise -1
-int htab_cursor_pos(struct WINDOW *w, struct TABS *ht, bool forward) {
+int htab_cursor_pos_bwd(struct WINDOW *w, struct TABS *ht) {
 
     int i;
+    float fwidth;
+    float fstop;
 
     if (w == NULL) {
         return -1;
@@ -290,36 +290,71 @@ int htab_cursor_pos(struct WINDOW *w, struct TABS *ht, bool forward) {
         return 0;
     }
 
-    if (forward == true) {
-        // tab forwards
-        for (i = 0; i < w->hts->numoftabstops; i++) {
-            if (w->xcursor < w->hts->ts[i]) {
-                w->xcursor = w->hts->ts[i];
-                return 0;
-            }
+    // calculate the width of a character in pixels,
+    // use current font selected for window, first char glyph,
+    // usualy a space, assumes all the same width...mono-space font
+    fwidth = (float)w->flut->rec[0].colcnt * w->fcp.scale;
+
+    // tab backwards
+    for (i = w->hts->numoftabstops-1; i >= 0 ; i--) {
+        fstop = fwidth * (float)w->hts->ts[i];
+        if (w->xcursor > fstop) {
+            w->xcursor = fstop;
+            return 0;
         }
-        // past last tab stop, move cursor to next line
-        new_line(w);
     }
-    else {
-        // tab backwards
-        for (i = w->hts->numoftabstops-1; i >= 0 ; i--) {
-            if (w->xcursor > w->hts->ts[i]) {
-                w->xcursor = w->hts->ts[i];
-                return 0;
-            }
-        }
-        // return cursor to the start of the line
-        carriage_return(w);
-    }
+
+    // return cursor to the start of the line
+    carriage_return(w);
+
     return 0;
 }
+
+// horizontal tab cursor foward
+// returns 0 if success, otherwise -1
+int htab_cursor_pos_fwd(struct WINDOW *w, struct TABS *ht) {
+
+    int i;
+    float fwidth;
+    float fstop;
+
+    if (w == NULL) {
+        return -1;
+    }
+
+    // if no tabs setting, do nothing to cursor position
+    if (ht == NULL) {
+        return 0;
+    }
+
+    // calculate the width of a character in pixels,
+    // use current font selected for window, first char glyph,
+    // usualy a space, assumes all the same width...mono-space font
+    fwidth = (float)w->flut->rec[0].colcnt * w->fcp.scale;
+
+    // tab forwards
+    for (i = 0; i < w->hts->numoftabstops; i++) {
+        fstop = fwidth * (float)w->hts->ts[i];
+        if (w->xcursor < fstop) {
+            w->xcursor = fstop;
+            return 0;
+        }
+    }
+
+    // past last tab stop, move cursor to next line
+    new_line(w);
+
+    return 0;
+}
+
 
 // vertical tab cursor
 // returns 0 if success, otherwise -1
 int vtab_cursor_pos(struct WINDOW *w, struct TABS *vt) {
 
     int i;
+    float fheight;
+    float fstop;
 
     if (w == NULL) {
         return -1;
@@ -330,10 +365,16 @@ int vtab_cursor_pos(struct WINDOW *w, struct TABS *vt) {
         return 0;
     }
 
+    // calculate the height of a character in pixels,
+    // use current font selected for window, first char glyph
+    // usualy a space, assumes all the same height...mono-space font
+    fheight = (float)w->flut->rec[0].rowcnt * w->fcp.scale;
+
     // tab down
     for (i = 0; i < w->vts->numoftabstops; i++) {
-        if (w->ycursor < w->vts->ts[i]) {
-            w->ycursor = w->vts->ts[i];
+        fstop = fheight * (float)w->vts->ts[i];
+        if (w->ycursor < fstop) {
+            w->ycursor = fstop;
             return 0;
         }
     }
@@ -383,7 +424,7 @@ int dprint(struct WINDOW *w, char *s, unsigned char style) {
             continue;
         }
         if (c == '\t') {
-            htab_cursor_pos(w, w->hts, true);
+            htab_cursor_pos_fwd(w, w->hts);
             continue;
         }
         if (c == '\r') {

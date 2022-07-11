@@ -32,7 +32,7 @@ extern "C" {
 #define MAX_FONT_GLYPHS  100
 
 // maximum charcters in a window
-#define MAX_CHARS_IN_WINDOW (2*80*24)
+#define MAX_CHARS_IN_WINDOW (2*80*43)
 
 // maximum dprint string length
 #define MAX_PRINT_LINE  MAX_CHARS_IN_WINDOW
@@ -106,8 +106,8 @@ struct CHARACTER {
 
 // defintion for horizontal and vertical tab stop setting (pixels)
 struct TABS {
-    int numoftabstops;
-    float ts[];
+    int numoftabstops;          // number of tab stops (starts at 0, first row is row 0)
+    int ts[];                   // tab stop in character positions
 };
 
 struct WINDOW {
@@ -128,7 +128,6 @@ struct WINDOW {
     float ycursor;
     float scrolloffsetx;        // scrolling offset
     float scrolloffsety;
-    float pixperline;           // pixels per line
     unsigned char cursorstyle;  // cursor style
     unsigned char cursorchar;   // cursor shape
 
@@ -166,7 +165,8 @@ int set_window_font(struct WINDOW *w, struct FONT_LUT *fntlut);
 int new_line(struct WINDOW *w);
 int carriage_return(struct WINDOW *w);
 int update_cursor_pos(struct WINDOW *w);
-int htab_cursor_pos(struct WINDOW *w, struct TABS *ht, bool forward);
+int htab_cursor_pos_fwd(struct WINDOW *w, struct TABS *ht);
+int htab_cursor_pos_bwd(struct WINDOW *w, struct TABS *ht);
 int vtab_cursor_pos(struct WINDOW *w, struct TABS *vt);
 int dprint(struct WINDOW *w, char *s, unsigned char style);
 int window_update(struct WINDOW *w);

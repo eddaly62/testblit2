@@ -11,8 +11,6 @@
 #include <errno.h>
 
 #include <allegro5/allegro.h>
-#include <allegro5/allegro_font.h>
-//#include <allegro5/allegro_ttf.h>
 #include <allegro5/allegro_primitives.h>
 #include <allegro5/allegro_image.h>
 
@@ -182,6 +180,28 @@ int set_font_scale(struct FONT_CHAR_PARAM *fcp, float scale) {
     return 0;
 }
 
+// determine color to use if pixel is on
+static void get_color_if_pixel_is_on(struct FONT_CHAR_PARAM *fcp, ALLEGRO_COLOR *color) {
+
+    if (fcp->style & INVERT) {
+        memcpy(color, &fcp->bgcolor, sizeof(ALLEGRO_COLOR));
+    }
+    else {
+        memcpy(color, &fcp->fgcolor, sizeof(ALLEGRO_COLOR));
+    }
+}
+
+// determine color to use if pixel is off
+static void get_color_if_pixel_is_off(struct FONT_CHAR_PARAM *fcp, ALLEGRO_COLOR *color) {
+
+    if (fcp->style & INVERT) {
+        memcpy(color, &fcp->fgcolor, sizeof(ALLEGRO_COLOR));
+    }
+    else {
+        memcpy(color, &fcp->bgcolor, sizeof(ALLEGRO_COLOR));
+    }
+}
+
 // draw pixels of character in fr, using parameters in fcp
 // returns 0 if successful, otherwise -1
 int make_character(struct FONT_REC *fr, struct FONT_CHAR_PARAM *fcp, struct POSITION *pos) {
@@ -204,33 +224,20 @@ int make_character(struct FONT_REC *fr, struct FONT_CHAR_PARAM *fcp, struct POSI
             y0 = fcp->scale*(r) + pos->y0;
             y1 = fcp->scale*(r+1) + pos->y0;
 
-            // todo - refactor
-            if (fcp->style & UNDER_SCORE || fcp->style & STRIKE_THRU) {
-                if (fcp->style & UNDER_SCORE) {
-                    if (r == fr->underscorerow) {
-                        if (fcp->style & INVERT) {
-                            color = fcp->bgcolor;
-                        }
-                        else {
-                            color = fcp->fgcolor;
-                        }
-                        al_draw_filled_rectangle(x0, y0, x1, y1, color);
-                        i++;
-                        continue;
-                    }
+            if (fcp->style & UNDER_SCORE) {
+                if (r == fr->underscorerow) {
+                    get_color_if_pixel_is_on(fcp, &color);
+                    al_draw_filled_rectangle(x0, y0, x1, y1, color);
+                    i++;
+                    continue;
                 }
-                if (fcp->style & STRIKE_THRU) {
-                    if (r == fr->strikethrurow) {
-                        if (fcp->style & INVERT) {
-                            color = fcp->bgcolor;
-                        }
-                        else {
-                            color = fcp->fgcolor;
-                        }
-                        al_draw_filled_rectangle(x0, y0, x1, y1, color);
-                        i++;
-                        continue;
-                    }
+            }
+            if (fcp->style & STRIKE_THRU) {
+                if (r == fr->strikethrurow) {
+                    get_color_if_pixel_is_on(fcp, &color);
+                    al_draw_filled_rectangle(x0, y0, x1, y1, color);
+                    i++;
+                    continue;
                 }
             }
 
@@ -238,29 +245,18 @@ int make_character(struct FONT_REC *fr, struct FONT_CHAR_PARAM *fcp, struct POSI
 
                 case '-':
                 case '=':
-                if (fcp->style & INVERT) {
-                    color = fcp->fgcolor;
-                }
-                else {
-                    color = fcp->bgcolor;
-                }
+                get_color_if_pixel_is_off(fcp, &color);
                 al_draw_filled_rectangle(x0, y0, x1, y1, color);
                 break;
 
                 case 'x':
                 case '*':
-                if (fcp->style & INVERT) {
-                    color = fcp->bgcolor;
-                }
-                else {
-                    color = fcp->fgcolor;
-                }
+                get_color_if_pixel_is_on(fcp, &color);
                 al_draw_filled_rectangle(x0, y0, x1, y1, color);
                 break;
 
                 default:
                 // print unknown pixel type, fill with background color
-                fprintf(stderr,"unknown pixel type, function(%s)\n", __FUNCTION__);
                 color = fcp->bgcolor;
                 al_draw_filled_rectangle(x0, y0, x1, y1, color);
                 break;

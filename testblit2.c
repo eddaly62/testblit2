@@ -71,8 +71,8 @@ enum SETIME {START = 0, END = 1};
 struct timeval start, end;
 
 // set tabs
-struct TABS htab = {.numoftabstops = 4, .ts = 40, 80, 120, 160};
-struct TABS vtab = {.numoftabstops = 4, .ts = 100, 200, 300, 400};
+struct TABS htab = {.numoftabstops = 4, .ts = 4, 8, 12, 16};    // columns
+struct TABS vtab = {.numoftabstops = 4, .ts = 2, 3, 4, 5};      // rows
 
 // Determine elapse time
 double elapsed_time(enum SETIME sts, struct timeval *start, struct timeval *end)
@@ -178,12 +178,12 @@ int main()  {
     al_register_event_source(q, al_get_display_event_source(win->display));
     al_register_event_source(q, al_get_timer_event_source(timer));
 
-    r = dprint(win, "0123456789\n", NO_STYLE);
+    r = dprint(win, "01\v23\v456\v789\n", NO_STYLE);
     r = dprint(win, " !\"#$%&'()*+,-./\n", NO_STYLE);
-    r = dprint(win, "\vabcdefghijklmnopqrstuvwxyz\n", NO_STYLE);
-    r = dprint(win, "\t:;<=>?@\n", NO_STYLE);
-    r = dprint(win, "\t\tABCDEFGHIJKLMNOPQRSTUVWXYZ\n", NO_STYLE);
-    r = dprint(win, "\t\t\t[\\]^_`{|}~\177\n\n", NO_STYLE);
+    r = dprint(win, "abcdefghijklmnopqrstuvwxyz\n", NO_STYLE);
+    r = dprint(win, ":;<=>?@\n", NO_STYLE);
+    r = dprint(win, "\tABCDEFGHIJKLMNOPQRSTUVWXYZ\n", NO_STYLE);
+    r = dprint(win, "\t\t[\\]^_`{|}~\177\n\n", NO_STYLE);
 
     r = dprint(win, "0123456789\n", BLINK);
     r = dprint(win, " !\"#$%&'()*+,-./\n", BLINK);
