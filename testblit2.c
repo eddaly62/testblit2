@@ -98,12 +98,11 @@ double elapsed_time(enum SETIME sts, struct timeval *start, struct timeval *end)
 
 int main()  {
 
-    int i;
     int r;
     bool running = true;
     double elapsedt=0;
 
-    ALLEGRO_DISPLAY *display;
+    ALLEGRO_DISPLAY *display = NULL;
     ALLEGRO_EVENT_QUEUE *q;
     ALLEGRO_TIMER *timer;
     ALLEGRO_EVENT event;
@@ -118,12 +117,6 @@ int main()  {
     al_register_event_source(q, al_get_keyboard_event_source());
     timer = al_create_timer(1.0 / 4);
     al_start_timer(timer);
-
-    // tell allegro were the resource directory is
-    ALLEGRO_PATH *path = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
-    al_append_path_component(path, RESOURCES_DIR);
-    al_change_directory(al_path_cstr(path, '/'));
-    al_destroy_path(path);
 
     // build font look-up tables
     r = build_font_lut(&font5x7lut, font_design_5_7, strlen(font_design_5_7),

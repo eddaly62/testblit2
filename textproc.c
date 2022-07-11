@@ -119,6 +119,10 @@ int get_font_record(char c, struct FONT_LUT *fi, struct FONT_REC *fr) {
 
     int i;
 
+    if ((fi == NULL) || (fr == NULL)) {
+        return -1;
+    }
+
     for (i = 0; i < fi->numofchars; i++) {
         if (c == fi->rec[i].c) {
             // found character

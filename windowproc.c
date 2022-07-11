@@ -46,7 +46,7 @@ struct WINDOW* create_window(ALLEGRO_DISPLAY *display, int width, int height, in
     p->display = al_create_display(p->width,p->height);
     if (p->display == NULL) {
         fprintf(stderr, "could not create display\n");
-        return NULL;
+        return p;
     }
 
     return (struct WINDOW*)p;
@@ -54,8 +54,6 @@ struct WINDOW* create_window(ALLEGRO_DISPLAY *display, int width, int height, in
 
 // return resource used by window
 void destroy_window(struct WINDOW *w) {
-
-    int i;
 
     if (w == NULL) {
         return;
@@ -181,9 +179,6 @@ int set_window_defaults(struct WINDOW *w) {
 // clear window
 // returns 0 if success, otherwise -1
 int clear_window(struct WINDOW *w) {
-
-    int r;
-    int i;
 
     if (w == NULL) {
         fprintf(stderr, "window pointer is NULL\n");
