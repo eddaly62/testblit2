@@ -146,33 +146,44 @@ int get_font_record(char c, struct FONT_LUT *fi, struct FONT_REC *fr) {
 int set_font_style(struct FONT_CHAR_PARAM *s, unsigned char style){
 
     if (s == NULL) {
-        fprintf(stderr, "pointer to style structure is NULL\n");
         return -1;
     }
     if (style > (INVERT | UNDER_SCORE | STRIKE_THRU | BLINK)) {
-        fprintf(stderr, "Invalid style value\n");
         return -1;
     }
     s->style = style;
     return 0;
 }
 
+// set the blink rate (blink divisor)
+int set_font_blinkrate(struct FONT_CHAR_PARAM *s, unsigned char bd){
+
+    if (s == NULL) {
+        return -1;
+    }
+    if (bd > (BLINK_MASK_1 | BLINK_MASK_p50 | BLINK_MASK_p25 | BLINK_MASK_p125)) {
+        return -1;
+    }
+    s->blinkdivisor = bd;
+    return 0;
+}
+
 int set_font_color(struct FONT_CHAR_PARAM *fcp, ALLEGRO_COLOR bgc, ALLEGRO_COLOR fgc) {
 
     if (fcp == NULL) {
-        fprintf(stderr, "null pointer to FONT_CHAR_PARAM structure\n");
         return -1;
     }
 
-    fcp->bgcolor = bgc;
-    fcp->fgcolor = fgc;
+    //fcp->bgcolor = bgc;
+    memcpy(&fcp->bgcolor, &bgc, sizeof(ALLEGRO_COLOR));
+    //fcp->fgcolor = fgc;
+    memcpy(&fcp->fgcolor, &fgc, sizeof(ALLEGRO_COLOR));
     return 0;
 }
 
 int set_font_scale(struct FONT_CHAR_PARAM *fcp, float scale) {
 
     if (fcp == NULL) {
-        fprintf(stderr, "null pointer to FONT_CHAR_PARAM structure\n");
         return -1;
     }
 

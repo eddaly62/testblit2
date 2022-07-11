@@ -124,7 +124,7 @@ int main()  {
     if (r == -1) {
         printf("malformed font index table\n");
     }
-    printf("sizeof font5x7lut = %ld\n", sizeof(struct FONT_LUT));
+    printf("sizeof font5x7lut = %lu\n", sizeof(struct FONT_LUT));
     r = build_font_lut(&font5x7rlut, font_design_5_7_rulings, strlen(font_design_5_7_rulings),
                         FONT5X7R_STRIKETHRU_OFFSET, FONT5X7R_UNDERLINE_OFFSET);
     if (r == -1) {
@@ -158,6 +158,7 @@ int main()  {
     if (r == -1) {
         fprintf(stderr, "could not set window defaults\n");
     }
+#if 0
     r = set_window_colors(win, BLACK, WHITE);
     if (r == -1) {
         fprintf(stderr, "could not set window color\n");
@@ -166,6 +167,7 @@ int main()  {
     if (r == -1) {
         fprintf(stderr, "could not set cursor position\n");
     }
+#endif
     r = set_window_font(win, &font5x7lut);
     if (r == -1) {
         fprintf(stderr, "could not set font\n");
@@ -178,40 +180,40 @@ int main()  {
     al_register_event_source(q, al_get_display_event_source(win->display));
     al_register_event_source(q, al_get_timer_event_source(timer));
 
-    r = dprint(win, "01\v23\v456\v789\n", NO_STYLE);
-    r = dprint(win, " !\"#$%&'()*+,-./\n", NO_STYLE);
-    r = dprint(win, "abcdefghijklmnopqrstuvwxyz\n", NO_STYLE);
-    r = dprint(win, ":;<=>?@\n", NO_STYLE);
-    r = dprint(win, "\tABCDEFGHIJKLMNOPQRSTUVWXYZ\n", NO_STYLE);
-    r = dprint(win, "\t\t[\\]^_`{|}~\177\n\n", NO_STYLE);
+    dprint(win, "01\v23\v456\v789\n", NO_STYLE);
+    dprint(win, " !\"#$%&'()*+,-./\n", NO_STYLE);
+    dprint(win, "abcdefghijklmnopqrstuvwxyz\n", NO_STYLE);
+    dprint(win, ":;<=>?@\n", NO_STYLE);
+    dprint(win, "\tABCDEFGHIJKLMNOPQRSTUVWXYZ\n", NO_STYLE);
+    dprint(win, "\t\t[\\]^_`{|}~\177\n\n", NO_STYLE);
 
-    r = dprint(win, "0123456789\n", BLINK);
-    r = dprint(win, " !\"#$%&'()*+,-./\n", BLINK);
-    r = dprint(win, "abcdefghijklmnopqrstuvwxyz\n", BLINK);
-    r = dprint(win, ":;<=>?@\n", BLINK);
-    r = dprint(win, "ABCDEFGHIJKLMNOPQRSTUVWXYZ\n", BLINK);
-    r = dprint(win, "[\\]^_`{|}~\177\n\n", BLINK);
+    dprint(win, "0123456789\n", BLINK);
+    dprint(win, " !\"#$%&'()*+,-./\n", BLINK);
+    dprint(win, "abcdefghijklmnopqrstuvwxyz\n", BLINK);
+    dprint(win, ":;<=>?@\n", BLINK);
+    dprint(win, "ABCDEFGHIJKLMNOPQRSTUVWXYZ\n", BLINK);
+    dprint(win, "[\\]^_`{|}~\177\n\n", BLINK);
 
-    r = dprint(win, "0123456789\n", INVERT);
-    r = dprint(win, " !\"#$%&'()*+,-./\n", INVERT);
-    r = dprint(win, "abcdefghijklmnopqrstuvwxyz\n", INVERT);
-    r = dprint(win, ":;<=>?@\n", INVERT);
-    r = dprint(win, "ABCDEFGHIJKLMNOPQRSTUVWXYZ\n", INVERT);
-    r = dprint(win, "[\\]^_`{|}~\177\n\n\r", INVERT);
+    dprint(win, "0123456789\n", INVERT);
+    dprint(win, " !\"#$%&'()*+,-./\n", INVERT);
+    dprint(win, "abcdefghijklmnopqrstuvwxyz\n", INVERT);
+    dprint(win, ":;<=>?@\n", INVERT);
+    dprint(win, "ABCDEFGHIJKLMNOPQRSTUVWXYZ\n", INVERT);
+    dprint(win, "[\\]^_`{|}~\177\n\n\r", INVERT);
 
-    r = dprint(win, "0123456789\n", UNDER_SCORE);
-    r = dprint(win, " !\"#$%&'()*+,-./\n", UNDER_SCORE);
-    r = dprint(win, "abcdefghijklmnopqrstuvwxyz\n", UNDER_SCORE);
-    r = dprint(win, ":;<=>?@\n", UNDER_SCORE);
-    r = dprint(win, "ABCDEFGHIJKLMNOPQRSTUVWXYZ\n", UNDER_SCORE);
-    r = dprint(win, "[\\]^_`{|}~\177\n\n", UNDER_SCORE);
+    dprint(win, "0123456789\n", UNDER_SCORE);
+    dprint(win, " !\"#$%&'()*+,-./\n", UNDER_SCORE);
+    dprint(win, "abcdefghijklmnopqrstuvwxyz\n", UNDER_SCORE);
+    dprint(win, ":;<=>?@\n", UNDER_SCORE);
+    dprint(win, "ABCDEFGHIJKLMNOPQRSTUVWXYZ\n", UNDER_SCORE);
+    dprint(win, "[\\]^_`{|}~\177\n\n", UNDER_SCORE);
 
-    r = dprint(win, "0123456789\n", STRIKE_THRU);
-    r = dprint(win, " !\"#$%&'()*+,-./\n", STRIKE_THRU);
-    r = dprint(win, "abcdefghijklmnopqrstuvwxyz\n", STRIKE_THRU);
-    r = dprint(win, ":;<=>?@\n", STRIKE_THRU);
-    r = dprint(win, "ABCDEFGHIJKLMNOPQRSTUVWXYZ\n", STRIKE_THRU);
-    r = dprint(win, "[\\]^_`{|}~\177\n\n", STRIKE_THRU);
+    dprint(win, "0123456789\n", STRIKE_THRU);
+    dprint(win, " !\"#$%&'()*+,-./\n", STRIKE_THRU);
+    dprint(win, "abcdefghijklmnopqrstuvwxyz\n", STRIKE_THRU);
+    dprint(win, ":;<=>?@\n", STRIKE_THRU);
+    dprint(win, "ABCDEFGHIJKLMNOPQRSTUVWXYZ\n", STRIKE_THRU);
+    dprint(win, "[\\]^_`{|}~\177\n\n", STRIKE_THRU);
 
     while (running) {
 
@@ -223,7 +225,7 @@ int main()  {
 
         if (event.type == ALLEGRO_EVENT_TIMER) {
 
-            elapsedt = elapsed_time(START, &start, &end);
+            elapsed_time(START, &start, &end);
 
             r = window_update(win);
             if (r == -1) {

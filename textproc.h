@@ -10,20 +10,20 @@ extern "C" {
 #include <allegro5/allegro.h>
 
 // color definitions
-#define BLACK   al_map_rgb(0, 0, 0)
-#define WHITE   al_map_rgb(200, 200, 200)
-#define RED     al_map_rgb(255, 0, 0)
-#define BLUE    al_map_rgb(0, 0, 255)
-#define GREEN   al_map_rgb(0, 255, 0)
+#define BLACK   (al_map_rgb(0, 0, 0))
+#define WHITE   (al_map_rgb(200, 200, 200))
+#define RED     (al_map_rgb(255, 0, 0))
+#define BLUE    (al_map_rgb(0, 0, 255))
+#define GREEN   (al_map_rgb(0, 255, 0))
 
 // window defaults
-#define DEFAULT_WINDOW_BGCOLOR  BLACK
-#define DEFAULT_WINDOW_FGCOLOR  WHITE
+#define DEFAULT_WINDOW_BGCOLOR  (BLUE)
+#define DEFAULT_WINDOW_FGCOLOR  (WHITE)
 #define DEFAULT_WINDOW_HOME_X   0
 #define DEFAULT_WINDOW_HOME_Y   0
 #define DEFAULT_WINDOW_SCALE    2
 #define DEFAULT_WINDOW_STYLE    NO_STYLE
-
+#define DEFAULT_WINDOW_BLINKRATE BLINK_MASK_1
 
 // folder were all "graphic" resources will located
 #define RESOURCES_DIR "resources"
@@ -150,6 +150,7 @@ int build_font_lut(struct FONT_LUT *fi, char *font, size_t size, int rstrikethru
 int get_font_record(char c, struct FONT_LUT *fi, struct FONT_REC *fr);
 int set_font_color(struct FONT_CHAR_PARAM *fcp, ALLEGRO_COLOR bgc, ALLEGRO_COLOR fgc);
 int set_font_style(struct FONT_CHAR_PARAM *s, unsigned char style);
+int set_font_blinkrate(struct FONT_CHAR_PARAM *s, unsigned char bd);
 int set_font_scale(struct FONT_CHAR_PARAM *fcp, float scale);
 int make_character(struct FONT_REC *fr, struct FONT_CHAR_PARAM *fcp, struct POSITION *pos);
 
@@ -157,6 +158,7 @@ int make_character(struct FONT_REC *fr, struct FONT_CHAR_PARAM *fcp, struct POSI
 // window prototypes
 struct WINDOW* create_window(ALLEGRO_DISPLAY *display, int width, int height, int xpos, int ypos);
 int set_window_colors(struct WINDOW *w, ALLEGRO_COLOR bgc, ALLEGRO_COLOR fgc);
+int set_window_blinkrate(struct WINDOW *w, unsigned char bd);
 int set_window_cursor_pos(struct WINDOW *w, int x, int y);
 int set_window_defaults(struct WINDOW *w);
 int clear_window(struct WINDOW *w);

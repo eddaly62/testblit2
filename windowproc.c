@@ -72,8 +72,10 @@ int restore_colors(struct WINDOW *w) {
         return -1;
     }
 
-    w->fcp.bgcolor = w->winbgcolor;
-    w->fcp.fgcolor = w->winfgcolor;
+    //w->fcp.bgcolor = w->winbgcolor;
+    memcpy(&w->fcp.bgcolor, &w->winbgcolor, sizeof(ALLEGRO_COLOR));
+    //w->fcp.fgcolor = w->winfgcolor;
+    memcpy(&w->fcp.fgcolor, &w->winfgcolor, sizeof(ALLEGRO_COLOR));
 
     return 0;
 }
@@ -88,10 +90,26 @@ int set_window_colors(struct WINDOW *w, ALLEGRO_COLOR bgc, ALLEGRO_COLOR fgc) {
         return -1;
     }
 
-    w->winfgcolor = fgc;
-    w->winbgcolor = bgc;
+    //w->winfgcolor = fgc;
+    memcpy(&w->winfgcolor, &fgc, sizeof(ALLEGRO_COLOR));
+    //w->winbgcolor = bgc;
+    memcpy(&w->winbgcolor, &bgc, sizeof(ALLEGRO_COLOR));
+
     restore_colors(w);
 
+    return 0;
+}
+
+// set the window's blink rate (blink divisor)
+int set_window_blinkrate(struct WINDOW *w, unsigned char bd){
+
+    if (w == NULL) {
+        return -1;
+    }
+    if (bd > (BLINK_MASK_1 | BLINK_MASK_p50 | BLINK_MASK_p25 | BLINK_MASK_p125)) {
+        return -1;
+    }
+    w->blinkdivisor = bd;
     return 0;
 }
 
@@ -166,6 +184,11 @@ int set_window_defaults(struct WINDOW *w) {
     r = set_window_tab_stops(w, NULL, NULL);
     if (r == -1) {
         fprintf(stderr, "could not set tab stops\n");
+        return -1;
+    }
+    r = set_window_blinkrate(w, DEFAULT_WINDOW_BLINKRATE);
+    if (r == -1) {
+        fprintf(stderr, "could not set blink rate\n");
         return -1;
     }
     w->fcp.scale = DEFAULT_WINDOW_SCALE;
@@ -442,8 +465,8 @@ int dprint(struct WINDOW *w, char *s, unsigned char style) {
 
         height = w->height;
         width = w->width;
-        bgc = w->fcp.bgcolor;
-        fgc = w->fcp.fgcolor;
+        //bgc = w->fcp.bgcolor;
+        //fgc = w->fcp.fgcolor;
         charcnt = w->charcnt;
 
         r = get_font_record(c, w->flut, &w->c[charcnt].fr);
@@ -452,7 +475,8 @@ int dprint(struct WINDOW *w, char *s, unsigned char style) {
             return -1;
         }
 
-        r = set_font_color(&w->c[charcnt].fcp, bgc, fgc);
+        r = set_font_color(&w->c[charcnt].fcp, w->fcp.bgcolor, w->fcp.fgcolor);
+//        r = set_font_color(&w->c[charcnt].fcp, bgc, fgc);
         if (r == -1) {
             printf("could not set font parmaters\n");
             return -1;
@@ -482,8 +506,6 @@ int dprint(struct WINDOW *w, char *s, unsigned char style) {
             return -1;
         }
         w->charcnt++;
-        printf("charcnt = %d\n", w->charcnt); // todo - for testing, remove
-
     }
     return 0;
 }
@@ -517,8 +539,7 @@ int window_update(struct WINDOW *w) {
     for (i = 0; i < w->charcnt; i++) {
 
         // check style, process blinking
-        if ((!(w->c[i].fcp.style & BLINK)) ||
-            (w->c[i].fcp.style & BLINK) && (w->blinkcounter & BLINK_MASK_p50)) {
+        if (!(w->c[i].fcp.style & BLINK) || (w->blinkcounter & w->blinkdivisor)) {
 
             // add/subtract any scrolling offsets (offsets can be negative)
             x = w->c[i].x + w->scrolloffsetx;
