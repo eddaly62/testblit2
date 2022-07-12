@@ -119,7 +119,7 @@ int main()  {
     al_start_timer(timer);
 
     // build font look-up tables
-    r = build_font_lut(&font5x7lut, font_design_5_7, strlen(font_design_5_7),
+    r = build_pcg_lut(&font5x7lut, font_design_5_7, strlen(font_design_5_7),
                         FONT5X7_STRIKETHRU_OFFSET, FONT5X7_UNDERLINE_OFFSET);
     if (r == -1) {
         printf("malformed font index table\n");
@@ -163,7 +163,7 @@ int main()  {
     if (r == -1) {
         fprintf(stderr, "could not set window color\n");
     }
-    r = set_window_cursor_pos(win, HOME_X, HOME_Y);
+    r = set_window_cursor_posxy(win, HOME_X, HOME_Y);
     if (r == -1) {
         fprintf(stderr, "could not set cursor position\n");
     }
@@ -186,6 +186,8 @@ int main()  {
     dprint(win, ":;<=>?@\n", NO_STYLE);
     dprint(win, "\tABCDEFGHIJKLMNOPQRSTUVWXYZ\n", NO_STYLE);
     dprint(win, "\t\t[\\]^_`{|}~\177\n\n", NO_STYLE);
+
+    set_window_colors(win, BLACK, RED);
 
     dprint(win, "0123456789\n", BLINK);
     dprint(win, " !\"#$%&'()*+,-./\n", BLINK);
@@ -214,6 +216,25 @@ int main()  {
     dprint(win, ":;<=>?@\n", STRIKE_THRU);
     dprint(win, "ABCDEFGHIJKLMNOPQRSTUVWXYZ\n", STRIKE_THRU);
     dprint(win, "[\\]^_`{|}~\177\n\n", STRIKE_THRU);
+
+    set_window_cursor_posrc(win, 0, 20);
+    set_window_colors(win, BLACK, GREEN);
+    dprint(win, "0123456789\n", NO_STYLE);
+
+    set_window_cursor_posrc(win, 1, 10);
+    set_window_colors(win, BLACK, WHITE);
+    dprint(win, "0123456789", BLINK);
+    move_cursor_bwd(win);
+    dprint(win, "0123456789", NO_STYLE);
+    move_cursor_up(win);
+    dprint(win, "0123456789\n", NO_STYLE);
+
+    set_window_cursor_posrc(win, 3, 10);
+    dprint(win, "0123456789", NO_STYLE);
+    move_cursor_bwd(win);
+    move_cursor_bwd(win);
+    delete_char(win);
+
 
     while (running) {
 

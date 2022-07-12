@@ -17,8 +17,8 @@ extern "C" {
 #define GREEN   (al_map_rgb(0, 255, 0))
 
 // window defaults
-#define DEFAULT_WINDOW_BGCOLOR  (BLUE)
-#define DEFAULT_WINDOW_FGCOLOR  (WHITE)
+#define DEFAULT_WINDOW_BGCOLOR  BLACK
+#define DEFAULT_WINDOW_FGCOLOR  WHITE
 #define DEFAULT_WINDOW_HOME_X   0
 #define DEFAULT_WINDOW_HOME_Y   0
 #define DEFAULT_WINDOW_SCALE    2
@@ -29,10 +29,10 @@ extern "C" {
 #define RESOURCES_DIR "resources"
 
 // maximum number of character in a font file
-#define MAX_FONT_GLYPHS  100
+#define MAX_FONT_GLYPHS  128
 
 // maximum charcters in a window
-#define MAX_CHARS_IN_WINDOW (2*80*43)
+#define MAX_CHARS_IN_WINDOW (2*84*24)
 
 // maximum dprint string length
 #define MAX_PRINT_LINE  MAX_CHARS_IN_WINDOW
@@ -43,8 +43,11 @@ extern "C" {
 // window flags
 #define DEFAULT_WINDOW_FLAGS (ALLEGRO_NOFRAME)
 
-// number of horizontal tab stops
-#define MAX_TABS   5
+// pcg format is the same as character font
+#define build_pcg_lut  build_font_lut
+
+// line wrap when cursor moves past right side of window
+#define LINE_WRAP (true)
 
 // font style
 extern const unsigned char INVERT;
@@ -159,17 +162,22 @@ int make_character(struct FONT_REC *fr, struct FONT_CHAR_PARAM *fcp, struct POSI
 struct WINDOW* create_window(ALLEGRO_DISPLAY *display, int width, int height, int xpos, int ypos);
 int set_window_colors(struct WINDOW *w, ALLEGRO_COLOR bgc, ALLEGRO_COLOR fgc);
 int set_window_blinkrate(struct WINDOW *w, unsigned char bd);
-int set_window_cursor_pos(struct WINDOW *w, int x, int y);
+int set_window_cursor_posxy(struct WINDOW *w, int x, int y);
+int set_window_cursor_posrc(struct WINDOW *w, int r, int c);
 int set_window_defaults(struct WINDOW *w);
 int clear_window(struct WINDOW *w);
 int set_window_tab_stops(struct WINDOW *w, struct TABS *hts, struct TABS *vts);
 int set_window_font(struct WINDOW *w, struct FONT_LUT *fntlut);
 int new_line(struct WINDOW *w);
 int carriage_return(struct WINDOW *w);
-int update_cursor_pos(struct WINDOW *w);
+int move_cursor_fwd(struct WINDOW *w);
+int move_cursor_bwd(struct WINDOW *w);
+int move_cursor_up(struct WINDOW *w);
 int htab_cursor_pos_fwd(struct WINDOW *w, struct TABS *ht);
 int htab_cursor_pos_bwd(struct WINDOW *w, struct TABS *ht);
 int vtab_cursor_pos(struct WINDOW *w, struct TABS *vt);
+int delete_char(struct WINDOW *w);
+bool proc_format_effectors(struct WINDOW *w, char c);
 int dprint(struct WINDOW *w, char *s, unsigned char style);
 int window_update(struct WINDOW *w);
 void destroy_window(struct WINDOW *w);

@@ -113,9 +113,22 @@ int set_window_blinkrate(struct WINDOW *w, unsigned char bd){
     return 0;
 }
 
-// set cursor position
+// get character width of current font in pixels
+// get glyph size from 1st character glyph in table (mono spaced font)
+static float get_char_width(struct WINDOW *w) {
+    return (float)w->flut->rec[0].colcnt * w->fcp.scale;
+}
+
+// get character height of current font in pixels
+// get glyph size from 1st character glyph in table (mono spaced font)
+static float get_char_height(struct WINDOW *w) {
+    return (float)w->flut->rec[0].rowcnt * w->fcp.scale;
+
+}
+
+// set cursor position (pixels)
 // returns 0 if success, otherwise -1
-int set_window_cursor_pos(struct WINDOW *w, int x, int y) {
+int set_window_cursor_posxy(struct WINDOW *w, int x, int y) {
 
     if (w == NULL) {
         fprintf(stderr, "cusor position not set, window pointer is NULL\n");
@@ -123,6 +136,21 @@ int set_window_cursor_pos(struct WINDOW *w, int x, int y) {
     }
     w->xcursor = (float)x;
     w->ycursor = (float)y;
+    return 0;
+}
+
+// set cursor position (row, col)
+// move cursor to character row and column using the currently selected font
+// returns 0 if success, otherwise -1
+int set_window_cursor_posrc(struct WINDOW *w, int r, int c) {
+
+    if (w == NULL) {
+        fprintf(stderr, "cusor position not set, window pointer is NULL\n");
+        return -1;
+    }
+
+    w->xcursor = (float)c * get_char_width(w);
+    w->ycursor = (float)r * get_char_height(w);
     return 0;
 }
 
@@ -176,7 +204,7 @@ int set_window_defaults(struct WINDOW *w) {
         fprintf(stderr, "could not set window color\n");
         return -1;
     }
-    r = set_window_cursor_pos(w, DEFAULT_WINDOW_HOME_X, DEFAULT_WINDOW_HOME_Y);
+    r = set_window_cursor_posxy(w, DEFAULT_WINDOW_HOME_X, DEFAULT_WINDOW_HOME_Y);
     if (r == -1) {
         fprintf(stderr, "could not set cursor position\n");
         return -1;
@@ -214,7 +242,7 @@ int clear_window(struct WINDOW *w) {
     w->charcnt = 0;
     w->scrolloffsetx = 0;
     w->scrolloffsety = 0;
-    set_window_cursor_pos(w, 0, 0);
+    set_window_cursor_posxy(w, 0, 0);
 
 
     // todo - add graphic clearing code here
@@ -246,7 +274,7 @@ int new_line(struct WINDOW *w) {
     }
 
     w->xcursor = 0;
-    w->ycursor += w->flut->rec[0].rowcnt * w->fcp.scale;
+    w->ycursor += get_char_height(w);
     return 0;
 }
 
@@ -263,14 +291,10 @@ int carriage_return(struct WINDOW *w) {
     return 0;
 }
 
-// move cursor position one character position based on the current character
-// at the cursor position. Move to the next row if position is not viewable.
+// move cursor position one character position forward
+// If LINE_WRAP is enabled, move to the next row when at the right edge of the window
 // returns 0 if success, otherwise -1
-int update_cursor_pos(struct WINDOW *w) {
-
-    int charcnt;
-    float scale;
-    float charwidth;
+int move_cursor_fwd(struct WINDOW *w) {
 
     if (w == NULL) {
         fprintf(stderr, "cursor position not updated, window pointer is NULL\n");
@@ -278,19 +302,55 @@ int update_cursor_pos(struct WINDOW *w) {
     }
 
     // move the cursor in the x direction, the width of the character
-    charcnt = w->charcnt;
-    scale = w->fcp.scale;
-    charwidth = (float)w->c[charcnt].fr.rec.colcnt * scale;
-
     // calculate where to move the cursor
-    w->xcursor += charwidth;
+    w->xcursor += get_char_width(w);
 
+#if LINE_WRAP
     // test if we went past the width of the window
-    if (w->xcursor > (w->width - charwidth)) {
+    if (w->xcursor > (w->width - get_char_width(w))) {
 
         // locate cursor to the start of the next line, based on the font size
         w->xcursor = 0;
-        w->ycursor += (float)w->c[charcnt].fr.rec.rowcnt * scale;
+        w->ycursor += get_char_height(w);
+    }
+#endif
+
+    return 0;
+}
+
+// move cursor position one character position backward
+// Stop when we are at the left edge of the window
+// returns 0 if success, otherwise -1
+int move_cursor_bwd(struct WINDOW *w) {
+
+    if (w == NULL) {
+        fprintf(stderr, "cursor position not updated, window pointer is NULL\n");
+        return -1;
+    }
+
+    // move the cursor in the x direction, the width of a character
+    w->xcursor -= get_char_width(w);
+    if (w->xcursor < 0) {
+        w->xcursor = 0;
+    }
+
+    return 0;
+}
+
+// move cursor position one character position up
+// Stop when we are at the top edge of the window
+// returns 0 if success, otherwise -1
+int move_cursor_up(struct WINDOW *w) {
+
+    if (w == NULL) {
+        fprintf(stderr, "cursor position not updated, window pointer is NULL\n");
+        return -1;
+    }
+
+    // move the cursor in the x direction, the width of a character
+    w->ycursor -= get_char_height(w);
+    if (w->ycursor < 0) {
+        w->ycursor = 0;
     }
 
     return 0;
@@ -301,7 +361,6 @@ int update_cursor_pos(struct WINDOW *w) {
 int htab_cursor_pos_bwd(struct WINDOW *w, struct TABS *ht) {
 
     int i;
-    float fwidth;
     float fstop;
 
     if (w == NULL) {
@@ -313,14 +372,9 @@ int htab_cursor_pos_bwd(struct WINDOW *w, struct TABS *ht) {
         return 0;
     }
 
-    // calculate the width of a character in pixels,
-    // use current font selected for window, first char glyph,
-    // usualy a space, assumes all the same width...mono-space font
-    fwidth = (float)w->flut->rec[0].colcnt * w->fcp.scale;
-
     // tab backwards
     for (i = w->hts->numoftabstops-1; i >= 0 ; i--) {
-        fstop = fwidth * (float)w->hts->ts[i];
+        fstop = get_char_width(w) * (float)w->hts->ts[i];
         if (w->xcursor > fstop) {
             w->xcursor = fstop;
             return 0;
@@ -338,7 +392,6 @@ int htab_cursor_pos_bwd(struct WINDOW *w, struct TABS *ht) {
 int htab_cursor_pos_fwd(struct WINDOW *w, struct TABS *ht) {
 
     int i;
-    float fwidth;
     float fstop;
 
     if (w == NULL) {
@@ -350,14 +403,9 @@ int htab_cursor_pos_fwd(struct WINDOW *w, struct TABS *ht) {
         return 0;
     }
 
-    // calculate the width of a character in pixels,
-    // use current font selected for window, first char glyph,
-    // usualy a space, assumes all the same width...mono-space font
-    fwidth = (float)w->flut->rec[0].colcnt * w->fcp.scale;
-
     // tab forwards
     for (i = 0; i < w->hts->numoftabstops; i++) {
-        fstop = fwidth * (float)w->hts->ts[i];
+        fstop = get_char_width(w) * (float)w->hts->ts[i];
         if (w->xcursor < fstop) {
             w->xcursor = fstop;
             return 0;
@@ -376,7 +424,6 @@ int htab_cursor_pos_fwd(struct WINDOW *w, struct TABS *ht) {
 int vtab_cursor_pos(struct WINDOW *w, struct TABS *vt) {
 
     int i;
-    float fheight;
     float fstop;
 
     if (w == NULL) {
@@ -388,14 +435,9 @@ int vtab_cursor_pos(struct WINDOW *w, struct TABS *vt) {
         return 0;
     }
 
-    // calculate the height of a character in pixels,
-    // use current font selected for window, first char glyph
-    // usualy a space, assumes all the same height...mono-space font
-    fheight = (float)w->flut->rec[0].rowcnt * w->fcp.scale;
-
     // tab down
     for (i = 0; i < w->vts->numoftabstops; i++) {
-        fstop = fheight * (float)w->vts->ts[i];
+        fstop = get_char_height(w) * (float)w->vts->ts[i];
         if (w->ycursor < fstop) {
             w->ycursor = fstop;
             return 0;
@@ -407,6 +449,59 @@ int vtab_cursor_pos(struct WINDOW *w, struct TABS *vt) {
     return 0;
 }
 
+// delete character at cursor position
+int delete_char(struct WINDOW *w) {
+
+    int i, r;
+
+    if (w == NULL) {
+        return -1;
+    }
+
+    for (i = 0; i < w->charcnt; i++) {
+        if ((w->c[i].x == w->xcursor) && (w->c[i].y == w->ycursor)) {
+            r = get_font_record(' ', w->flut, &w->c[i].fr);
+            if (r == -1) {
+                return -1;
+            }
+        }
+    }
+    return 0;
+}
+
+// process format effectors
+// returns true if a format effector was processed, otherwise false
+bool proc_format_effectors(struct WINDOW *w, char c) {
+
+    // process escape sequences
+    if (c == '\n') {
+        new_line(w);
+        return true;
+    }
+    if (c == '\t') {
+        htab_cursor_pos_fwd(w, w->hts);
+        return true;
+    }
+    if (c == '\r') {
+        carriage_return(w);
+        return true;
+    }
+    if (c == '\f') {
+        clear_window(w);
+        return true;
+    }
+    if (c == '\v') {
+        vtab_cursor_pos(w, w->vts);
+        return true;
+    }
+    if (c == '\b') {
+        move_cursor_bwd(w);
+        delete_char(w);
+        return true;
+    }
+    return false;
+}
+
 // print string to window
 // returns 0 if success, otherwise -1
 int dprint(struct WINDOW *w, char *s, unsigned char style) {
@@ -414,9 +509,10 @@ int dprint(struct WINDOW *w, char *s, unsigned char style) {
     int r;
     int i;
     int sl;
+    bool tf;;
     int charcnt;
-    float height, width;
-    ALLEGRO_COLOR bgc, fgc;
+    //float height, width;
+    //ALLEGRO_COLOR bgc, fgc;
     char t[MAX_PRINT_LINE];
     char c;
 
@@ -441,30 +537,14 @@ int dprint(struct WINDOW *w, char *s, unsigned char style) {
         // get character
         c = t[i];
 
-        // process escape sequences
-        if (c == '\n') {
-            new_line(w);
-            continue;
-        }
-        if (c == '\t') {
-            htab_cursor_pos_fwd(w, w->hts);
-            continue;
-        }
-        if (c == '\r') {
-            carriage_return(w);
-            continue;
-        }
-        if (c == '\f') {
-            clear_window(w);
-            continue;
-        }
-        if (c == '\v') {
-            vtab_cursor_pos(w, w->vts);
+        // process format effectors
+        tf = proc_format_effectors(w, c);
+        if (tf == true) {
             continue;
         }
 
-        height = w->height;
-        width = w->width;
+        //height = w->height;
+        //width = w->width;
         //bgc = w->fcp.bgcolor;
         //fgc = w->fcp.fgcolor;
         charcnt = w->charcnt;
@@ -500,7 +580,7 @@ int dprint(struct WINDOW *w, char *s, unsigned char style) {
             return -1;
         }
 
-        r = update_cursor_pos(w);
+        r = move_cursor_fwd(w);
         if (r == -1) {
             printf("could not update cursor position\n");
             return -1;
