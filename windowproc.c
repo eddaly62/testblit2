@@ -590,6 +590,18 @@ int dprint(struct WINDOW *w, char *s, unsigned char style) {
     return 0;
 }
 
+// update blink counter
+// return -1 if error, otherwise 0
+static void update_blink_counter(struct WINDOW *w) {
+
+    if (w->blinkcounter == UCHAR_MAX) {
+        w->blinkcounter = 0;
+    }
+    else {
+        w->blinkcounter++;
+    }
+}
+
 // window update
 // place in a thread so it is called repeatively, at a known rate
 // only need one of these for multiple windows
@@ -606,12 +618,7 @@ int window_update(struct WINDOW *w) {
     }
 
     // increment blink counter
-    if (w->blinkcounter == UCHAR_MAX) {
-        w->blinkcounter = 0;
-    }
-    else {
-        w->blinkcounter++;
-    }
+    update_blink_counter(w);
 
     al_set_target_backbuffer(w->display);
     al_clear_to_color(w->winbgcolor);
