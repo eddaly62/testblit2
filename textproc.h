@@ -49,6 +49,9 @@ extern "C" {
 // line wrap when cursor moves past right side of window
 #define LINE_WRAP (true)
 
+// deleted character marker
+#define DELETED_CHARACTER   '\e'
+
 // font style
 extern const unsigned char INVERT;
 extern const unsigned char UNDER_SCORE;

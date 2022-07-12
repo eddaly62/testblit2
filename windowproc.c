@@ -16,6 +16,60 @@
 
 #include "textproc.h"
 
+// get character width of current font in pixels
+// get glyph size from 1st character glyph in table (mono spaced font)
+static float get_char_width(struct WINDOW *w) {
+    return (float)w->flut->rec[0].colcnt * w->fcp.scale;
+}
+
+// get character height of current font in pixels
+// get glyph size from 1st character glyph in table (mono spaced font)
+static float get_char_height(struct WINDOW *w) {
+    return (float)w->flut->rec[0].rowcnt * w->fcp.scale;
+}
+
+// update blink counter
+// return -1 if error, otherwise 0
+static void update_blink_counter(struct WINDOW *w) {
+
+    if (w->blinkcounter == UCHAR_MAX) {
+        w->blinkcounter = 0;
+    }
+    else {
+        w->blinkcounter++;
+    }
+}
+
+// copy window color settings to character color settings
+// returns 0 if success, otherwise -1
+static int restore_colors(struct WINDOW *w) {
+
+    if (w == NULL) {
+        fprintf(stderr, "color not set, window pointer is NULL\n");
+        return -1;
+    }
+
+    //w->fcp.bgcolor = w->winbgcolor;
+    memcpy(&w->fcp.bgcolor, &w->winbgcolor, sizeof(ALLEGRO_COLOR));
+    //w->fcp.fgcolor = w->winfgcolor;
+    memcpy(&w->fcp.fgcolor, &w->winfgcolor, sizeof(ALLEGRO_COLOR));
+
+    return 0;
+}
+
+// copies the current cursor location to the charcter structure
+// returns 0 if success, otherwise -1
+static int cp_cursorxy_to_charxy(struct WINDOW *w) {
+
+    if (w == NULL) {
+        fprintf(stderr, "cursor position not updated, window pointer is NULL\n");
+        return -1;
+    }
+
+    w->c[w->charcnt].x = w->xcursor;
+    w->c[w->charcnt].y = w->ycursor;
+    return 0;
+}
 
 // create a window
 // returns pointer to window or NULL if error
@@ -63,24 +117,6 @@ void destroy_window(struct WINDOW *w) {
     free(w);
 }
 
-// copy window color settings to character color settings
-// returns 0 if success, otherwise -1
-int restore_colors(struct WINDOW *w) {
-
-    if (w == NULL) {
-        fprintf(stderr, "color not set, window pointer is NULL\n");
-        return -1;
-    }
-
-    //w->fcp.bgcolor = w->winbgcolor;
-    memcpy(&w->fcp.bgcolor, &w->winbgcolor, sizeof(ALLEGRO_COLOR));
-    //w->fcp.fgcolor = w->winfgcolor;
-    memcpy(&w->fcp.fgcolor, &w->winfgcolor, sizeof(ALLEGRO_COLOR));
-
-    return 0;
-}
-
-
 // set colors window
 // returns 0 if success, otherwise -1
 int set_window_colors(struct WINDOW *w, ALLEGRO_COLOR bgc, ALLEGRO_COLOR fgc) {
@@ -113,18 +149,6 @@ int set_window_blinkrate(struct WINDOW *w, unsigned char bd){
     return 0;
 }
 
-// get character width of current font in pixels
-// get glyph size from 1st character glyph in table (mono spaced font)
-static float get_char_width(struct WINDOW *w) {
-    return (float)w->flut->rec[0].colcnt * w->fcp.scale;
-}
-
-// get character height of current font in pixels
-// get glyph size from 1st character glyph in table (mono spaced font)
-static float get_char_height(struct WINDOW *w) {
-    return (float)w->flut->rec[0].rowcnt * w->fcp.scale;
-
-}
 
 // set cursor position (pixels)
 // returns 0 if success, otherwise -1
@@ -250,19 +274,6 @@ int clear_window(struct WINDOW *w) {
     return 0;
 }
 
-// copies the current cursor location to the charcter structure
-// returns 0 if success, otherwise -1
-int cp_cursorxy_to_charxy(struct WINDOW *w) {
-
-    if (w == NULL) {
-        fprintf(stderr, "cursor position not updated, window pointer is NULL\n");
-        return -1;
-    }
-
-    w->c[w->charcnt].x = w->xcursor;
-    w->c[w->charcnt].y = w->ycursor;
-    return 0;
-}
 
 // move cursor to the next new line (carriage return, line feed)
 // returns 0 if success, otherwise -1
@@ -460,10 +471,8 @@ int delete_char(struct WINDOW *w) {
 
     for (i = 0; i < w->charcnt; i++) {
         if ((w->c[i].x == w->xcursor) && (w->c[i].y == w->ycursor)) {
-            r = get_font_record(' ', w->flut, &w->c[i].fr);
-            if (r == -1) {
-                return -1;
-            }
+            // mark character deleted
+            w->c[i].fr.rec.c = DELETED_CHARACTER;
         }
     }
     return 0;
@@ -497,6 +506,9 @@ bool proc_format_effectors(struct WINDOW *w, char c) {
     if (c == '\b') {
         move_cursor_bwd(w);
         delete_char(w);
+        return true;
+    }
+    if (c == DELETED_CHARACTER) {
         return true;
     }
     return false;
@@ -590,17 +602,6 @@ int dprint(struct WINDOW *w, char *s, unsigned char style) {
     return 0;
 }
 
-// update blink counter
-// return -1 if error, otherwise 0
-static void update_blink_counter(struct WINDOW *w) {
-
-    if (w->blinkcounter == UCHAR_MAX) {
-        w->blinkcounter = 0;
-    }
-    else {
-        w->blinkcounter++;
-    }
-}
 
 // window update
 // place in a thread so it is called repeatively, at a known rate
@@ -625,22 +626,26 @@ int window_update(struct WINDOW *w) {
 
     for (i = 0; i < w->charcnt; i++) {
 
-        // check style, process blinking
-        if (!(w->c[i].fcp.style & BLINK) || (w->blinkcounter & w->blinkdivisor)) {
+        // check if deleted character
+        if (w->c[i].fr.rec.c != DELETED_CHARACTER) {
 
-            // add/subtract any scrolling offsets (offsets can be negative)
-            x = w->c[i].x + w->scrolloffsetx;
-            y = w->c[i].y + w->scrolloffsety;
+            // check style, process blinking
+            if (!(w->c[i].fcp.style & BLINK) || (w->blinkcounter & w->blinkdivisor)) {
 
-            // display character only if viewable
-            if ((x >= 0) && (x < w->width) && (y >= 0) && (y < w->height)) {
+                // add/subtract any scrolling offsets (offsets can be negative)
+                x = w->c[i].x + w->scrolloffsetx;
+                y = w->c[i].y + w->scrolloffsety;
 
-                pos.x0 = x;
-                pos.y0 = y;
-                r = make_character(&w->c[i].fr, &w->c[i].fcp, &pos);
-                if (r == -1) {
-                    printf("could not make character\n");
-                    return -1;
+                // display character only if viewable
+                if ((x >= 0) && (x < w->width) && (y >= 0) && (y < w->height)) {
+
+                    pos.x0 = x;
+                    pos.y0 = y;
+                    r = make_character(&w->c[i].fr, &w->c[i].fcp, &pos);
+                    if (r == -1) {
+                        printf("could not make character\n");
+                        return -1;
+                    }
                 }
             }
         }
