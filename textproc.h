@@ -15,18 +15,23 @@ extern "C" {
 #define RED     (al_map_rgb(255, 0, 0))
 #define BLUE    (al_map_rgb(0, 0, 255))
 #define GREEN   (al_map_rgb(0, 255, 0))
+// retro colors of older terminals
+#define AMBER   (al_map_rgb(255,176,0))
+#define LT_AMBER    (al_map_rgb(255,204,0))
+#define APPLE2  (al_map_rgb(51,255,51))
+#define APPLE2C (al_map_rgb(102,255,102))
+#define GREEN1  (al_map_rgb(51,255,0))
+#define GREEN2  (al_map_rgb(0,255,51))
+#define GREEN3  (al_map_rgb(0,255,102))
 
 // window defaults
 #define DEFAULT_WINDOW_BGCOLOR  BLACK
-#define DEFAULT_WINDOW_FGCOLOR  WHITE
+#define DEFAULT_WINDOW_FGCOLOR  LT_AMBER
 #define DEFAULT_WINDOW_HOME_X   0
 #define DEFAULT_WINDOW_HOME_Y   0
 #define DEFAULT_WINDOW_SCALE    2
 #define DEFAULT_WINDOW_STYLE    NO_STYLE
 #define DEFAULT_WINDOW_BLINKRATE BLINK_MASK_1
-
-// folder were all "graphic" resources will located
-#define RESOURCES_DIR "resources"
 
 // maximum number of character in a font file
 #define MAX_FONT_GLYPHS  128
@@ -35,7 +40,7 @@ extern "C" {
 #define MAX_CHARS_IN_WINDOW (2*84*24)
 
 // maximum dprint string length
-#define MAX_PRINT_LINE  MAX_CHARS_IN_WINDOW
+#define MAX_PRINT_LINE  128
 
 // display this character when there is no match in the font index array
 #define DEFAULT_ERR_CHAR_INDEX 0
@@ -44,12 +49,18 @@ extern "C" {
 #define DEFAULT_WINDOW_FLAGS (ALLEGRO_NOFRAME)
 
 // pcg format is the same as character font
+// so instead of duplicating the function
+// create an alias so the same function can be accessed
+// using a more decriptive name
 #define build_pcg_lut  build_font_lut
 
 // line wrap when cursor moves past right side of window
 #define LINE_WRAP (true)
 
 // deleted character marker
+// this character when a CHARACTER element in the WINDOW structure is marked as deleted.
+// deleted character are not actually deleted until a clear screen (formfeed) is performed.
+// the deleted marked characters are not rendered by the window_update function
 #define DELETED_CHARACTER   '\e'
 
 // font style
@@ -154,35 +165,35 @@ struct WINDOW {
 // prototypes
 int build_font_lut(struct FONT_LUT *fi, char *font, size_t size, int rstrikethru, int runderline);
 int get_font_record(char c, struct FONT_LUT *fi, struct FONT_REC *fr);
-int set_font_color(struct FONT_CHAR_PARAM *fcp, ALLEGRO_COLOR bgc, ALLEGRO_COLOR fgc);
-int set_font_style(struct FONT_CHAR_PARAM *s, unsigned char style);
-int set_font_blinkrate(struct FONT_CHAR_PARAM *s, unsigned char bd);
-int set_font_scale(struct FONT_CHAR_PARAM *fcp, float scale);
-int make_character(struct FONT_REC *fr, struct FONT_CHAR_PARAM *fcp, struct POSITION *pos);
+void set_font_color(struct FONT_CHAR_PARAM *fcp, ALLEGRO_COLOR bgc, ALLEGRO_COLOR fgc);
+void set_font_style(struct FONT_CHAR_PARAM *s, unsigned char style);
+void set_font_blinkrate(struct FONT_CHAR_PARAM *s, unsigned char bd);
+void set_font_scale(struct FONT_CHAR_PARAM *fcp, float scale);
+void make_character(struct FONT_REC *fr, struct FONT_CHAR_PARAM *fcp, struct POSITION *pos);
 
 
 // window prototypes
 struct WINDOW* create_window(ALLEGRO_DISPLAY *display, int width, int height, int xpos, int ypos);
-int set_window_colors(struct WINDOW *w, ALLEGRO_COLOR bgc, ALLEGRO_COLOR fgc);
-int set_window_blinkrate(struct WINDOW *w, unsigned char bd);
-int set_window_cursor_posxy(struct WINDOW *w, int x, int y);
-int set_window_cursor_posrc(struct WINDOW *w, int r, int c);
-int set_window_defaults(struct WINDOW *w);
-int clear_window(struct WINDOW *w);
-int set_window_tab_stops(struct WINDOW *w, struct TABS *hts, struct TABS *vts);
-int set_window_font(struct WINDOW *w, struct FONT_LUT *fntlut);
-int new_line(struct WINDOW *w);
-int carriage_return(struct WINDOW *w);
-int move_cursor_fwd(struct WINDOW *w);
-int move_cursor_bwd(struct WINDOW *w);
-int move_cursor_up(struct WINDOW *w);
-int htab_cursor_pos_fwd(struct WINDOW *w, struct TABS *ht);
-int htab_cursor_pos_bwd(struct WINDOW *w, struct TABS *ht);
-int vtab_cursor_pos(struct WINDOW *w, struct TABS *vt);
-int delete_char(struct WINDOW *w);
+void set_window_colors(struct WINDOW *w, ALLEGRO_COLOR bgc, ALLEGRO_COLOR fgc);
+void set_window_blinkrate(struct WINDOW *w, unsigned char bd);
+void set_window_cursor_posxy(struct WINDOW *w, int x, int y);
+void set_window_cursor_posrc(struct WINDOW *w, int r, int c);
+void set_window_defaults(struct WINDOW *w);
+void clear_window(struct WINDOW *w);
+void set_window_tab_stops(struct WINDOW *w, struct TABS *hts, struct TABS *vts);
+void set_window_font(struct WINDOW *w, struct FONT_LUT *fntlut);
+void new_line(struct WINDOW *w);
+void carriage_return(struct WINDOW *w);
+void move_cursor_fwd(struct WINDOW *w);
+void move_cursor_bwd(struct WINDOW *w);
+void move_cursor_up(struct WINDOW *w);
+void htab_cursor_pos_fwd(struct WINDOW *w, struct TABS *ht);
+void htab_cursor_pos_bwd(struct WINDOW *w, struct TABS *ht);
+void vtab_cursor_pos(struct WINDOW *w, struct TABS *vt);
+void delete_char(struct WINDOW *w);
 bool proc_format_effectors(struct WINDOW *w, char c);
 int dprint(struct WINDOW *w, char *s, unsigned char style);
-int window_update(struct WINDOW *w);
+void window_update(struct WINDOW *w);
 void destroy_window(struct WINDOW *w);
 
 

@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <termios.h>
 #include <errno.h>
+#include <assert.h>
 
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_primitives.h>
@@ -32,14 +33,13 @@ const unsigned char BLINK_MASK_p25  = 4;    // 1/4 of the fastest rate
 const unsigned char BLINK_MASK_p125 = 8;    // 1/8 of the fastest rate
 
 // builds a font look-up table that the bitmap functions will use
-// returns -1 if error, otherwise the number of characters found in the font array
+// returns the number of characters found in the font array
 int build_font_lut(struct FONT_LUT *fi, char *font, size_t size, int rstrikethru, int runderline) {
 
     int n, rcnt, ccnt, nrec, idx;
 
-    if ((fi == NULL) || (font == NULL)) {
-        return -1;
-    }
+    assert(fi != NULL);
+    assert(font != NULL);
 
     nrec = 0;
     idx = -1;
@@ -88,10 +88,8 @@ int build_font_lut(struct FONT_LUT *fi, char *font, size_t size, int rstrikethru
             // store index to character pattern
             fi->rec[idx].index = n+2;
 
-            if ((font[n+2] != '-') && (font[n+2] != 'x')){
-                // error, malformed font table
-                return -1;
-            }
+            // test if font table has a formatting error
+            assert((font[n+2] == '-') || (font[n+2] == 'x'));
         }
         else if ((font[n] == '-') || (font[n] == 'x')) {
             // count columns in current row
@@ -117,9 +115,8 @@ int get_font_record(char c, struct FONT_LUT *fi, struct FONT_REC *fr) {
 
     int i;
 
-    if ((fi == NULL) || (fr == NULL)) {
-        return -1;
-    }
+    assert(fi != NULL);
+    assert(fr != NULL);
 
     for (i = 0; i < fi->numofchars; i++) {
         if (c == fi->rec[i].c) {
@@ -143,52 +140,37 @@ int get_font_record(char c, struct FONT_LUT *fi, struct FONT_REC *fr) {
 
 // set the print style to INVERT, UNDER_SCORE, STRIKE_THRU, BLINK
 // these can be or'd together
-int set_font_style(struct FONT_CHAR_PARAM *s, unsigned char style){
+void set_font_style(struct FONT_CHAR_PARAM *s, unsigned char style){
 
-    if (s == NULL) {
-        return -1;
-    }
-    if (style > (INVERT | UNDER_SCORE | STRIKE_THRU | BLINK)) {
-        return -1;
-    }
+    assert(s != NULL);
+    assert(style <= (INVERT | UNDER_SCORE | STRIKE_THRU | BLINK));
+
     s->style = style;
-    return 0;
 }
 
 // set the blink rate (blink divisor)
-int set_font_blinkrate(struct FONT_CHAR_PARAM *s, unsigned char bd){
+void set_font_blinkrate(struct FONT_CHAR_PARAM *s, unsigned char bd){
 
-    if (s == NULL) {
-        return -1;
-    }
-    if (bd > (BLINK_MASK_1 | BLINK_MASK_p50 | BLINK_MASK_p25 | BLINK_MASK_p125)) {
-        return -1;
-    }
+    assert(s != NULL);
+    assert(bd <= (BLINK_MASK_1 | BLINK_MASK_p50 | BLINK_MASK_p25 | BLINK_MASK_p125));
+
     s->blinkdivisor = bd;
-    return 0;
 }
 
-int set_font_color(struct FONT_CHAR_PARAM *fcp, ALLEGRO_COLOR bgc, ALLEGRO_COLOR fgc) {
+void set_font_color(struct FONT_CHAR_PARAM *fcp, ALLEGRO_COLOR bgc, ALLEGRO_COLOR fgc) {
 
-    if (fcp == NULL) {
-        return -1;
-    }
+    assert(fcp != NULL);
 
-    //fcp->bgcolor = bgc;
     memcpy(&fcp->bgcolor, &bgc, sizeof(ALLEGRO_COLOR));
-    //fcp->fgcolor = fgc;
     memcpy(&fcp->fgcolor, &fgc, sizeof(ALLEGRO_COLOR));
-    return 0;
 }
 
-int set_font_scale(struct FONT_CHAR_PARAM *fcp, float scale) {
+void set_font_scale(struct FONT_CHAR_PARAM *fcp, float scale) {
 
-    if (fcp == NULL) {
-        return -1;
-    }
+    assert(fcp != NULL);
+    assert(scale > 0);
 
     fcp->scale = scale;
-    return 0;
 }
 
 // determine color to use if pixel is on
@@ -214,8 +196,7 @@ static void get_color_if_pixel_is_off(struct FONT_CHAR_PARAM *fcp, ALLEGRO_COLOR
 }
 
 // draw pixels of character in fr, using parameters in fcp
-// returns 0 if successful, otherwise -1
-int make_character(struct FONT_REC *fr, struct FONT_CHAR_PARAM *fcp, struct POSITION *pos) {
+void make_character(struct FONT_REC *fr, struct FONT_CHAR_PARAM *fcp, struct POSITION *pos) {
 
     int i;
     float r, c;
@@ -223,9 +204,9 @@ int make_character(struct FONT_REC *fr, struct FONT_CHAR_PARAM *fcp, struct POSI
     float y0, y1;
     ALLEGRO_COLOR color;
 
-    if ((fr == NULL) || (fcp == NULL) || (pos == NULL)) {
-        return -1;
-    }
+    assert(fr != NULL);
+    assert(fcp != NULL);
+    assert(pos != NULL);
 
     i = fr->rec.index;
     for (r = 0; r < fr->rec.rowcnt; r++) {
@@ -276,5 +257,4 @@ int make_character(struct FONT_REC *fr, struct FONT_CHAR_PARAM *fcp, struct POSI
             i++;
         }
     }
-    return 0;
 }

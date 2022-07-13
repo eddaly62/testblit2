@@ -119,63 +119,36 @@ int main()  {
     al_start_timer(timer);
 
     // build font look-up tables
-    r = build_pcg_lut(&font5x7lut, font_design_5_7, strlen(font_design_5_7),
+    build_font_lut(&font5x7lut, font_design_5_7, strlen(font_design_5_7),
                         FONT5X7_STRIKETHRU_OFFSET, FONT5X7_UNDERLINE_OFFSET);
-    if (r == -1) {
-        printf("malformed font index table\n");
-    }
-    printf("sizeof font5x7lut = %lu\n", sizeof(struct FONT_LUT));
-    r = build_font_lut(&font5x7rlut, font_design_5_7_rulings, strlen(font_design_5_7_rulings),
+
+    build_font_lut(&font5x7rlut, font_design_5_7_rulings, strlen(font_design_5_7_rulings),
                         FONT5X7R_STRIKETHRU_OFFSET, FONT5X7R_UNDERLINE_OFFSET);
-    if (r == -1) {
-        printf("malformed font index table\n");
-    }
-    r = build_font_lut(&font7x9lut, font_design_7_9, strlen(font_design_7_9),
+
+    build_pcg_lut(&font7x9lut, font_design_7_9, strlen(font_design_7_9),
                         FONT7X9_STRIKETHRU_OFFSET, FONT7X9_UNDERLINE_OFFSET);
-    if (r == -1) {
-        printf("malformed font index table\n");
-    }
-    r = build_font_lut(&font7x9rlut, font_design_7_9_rulings, strlen(font_design_7_9_rulings),
+
+    build_font_lut(&font7x9rlut, font_design_7_9_rulings, strlen(font_design_7_9_rulings),
                         FONT7X9R_STRIKETHRU_OFFSET, FONT7X9R_UNDERLINE_OFFSET);
-    if (r == -1) {
-        printf("malformed font index table\n");
-    }
-    r = build_font_lut(&font10x14lut, font_design_10_14, strlen(font_design_10_14),
+
+    build_font_lut(&font10x14lut, font_design_10_14, strlen(font_design_10_14),
                         FONT10X14_STRIKETHRU_OFFSET, FONT10X14_UNDERLINE_OFFSET);
-    if (r == -1) {
-        printf("malformed font index table\n");
-    }
-    r = build_font_lut(&font10x14rlut, font_design_10_14_rulings, strlen(font_design_10_14_rulings),
+
+    build_font_lut(&font10x14rlut, font_design_10_14_rulings, strlen(font_design_10_14_rulings),
                         FONT10X14R_STRIKETHRU_OFFSET, FONT10X14R_UNDERLINE_OFFSET);
-    if (r == -1) {
-        printf("malformed font index table\n");
-    }
 
     // create window (using all the apis to test them)
     win = create_window(display, WIN_WIDTH, WIN_HEIGHT, WIN_LOC_X, WIN_LOC_Y);
 
-    r = set_window_defaults(win);
-    if (r == -1) {
-        fprintf(stderr, "could not set window defaults\n");
-    }
+    set_window_defaults(win);
+
 #if 0
-    r = set_window_colors(win, BLACK, WHITE);
-    if (r == -1) {
-        fprintf(stderr, "could not set window color\n");
-    }
-    r = set_window_cursor_posxy(win, HOME_X, HOME_Y);
-    if (r == -1) {
-        fprintf(stderr, "could not set cursor position\n");
-    }
+    set_window_colors(win, BLACK, WHITE);
+    set_window_cursor_posxy(win, HOME_X, HOME_Y);
 #endif
-    r = set_window_font(win, &font5x7lut);
-    if (r == -1) {
-        fprintf(stderr, "could not set font\n");
-    }
-    r = set_window_tab_stops(win, &htab, &vtab);
-    if (r == -1) {
-        fprintf(stderr, "could not set tabs\n");
-    }
+
+    set_window_font(win, &font5x7lut);
+    set_window_tab_stops(win, &htab, &vtab);
 
     al_register_event_source(q, al_get_display_event_source(win->display));
     al_register_event_source(q, al_get_timer_event_source(timer));
@@ -248,10 +221,7 @@ int main()  {
 
             elapsed_time(START, &start, &end);
 
-            r = window_update(win);
-            if (r == -1) {
-                fprintf(stderr, "error with window_update\n");
-            }
+            window_update(win);
 
             elapsedt = elapsed_time(END, &start, &end);
 

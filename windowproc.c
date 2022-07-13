@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <termios.h>
 #include <errno.h>
+#include <assert.h>
 
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_primitives.h>
@@ -29,7 +30,6 @@ static float get_char_height(struct WINDOW *w) {
 }
 
 // update blink counter
-// return -1 if error, otherwise 0
 static void update_blink_counter(struct WINDOW *w) {
 
     if (w->blinkcounter == UCHAR_MAX) {
@@ -41,34 +41,21 @@ static void update_blink_counter(struct WINDOW *w) {
 }
 
 // copy window color settings to character color settings
-// returns 0 if success, otherwise -1
-static int restore_colors(struct WINDOW *w) {
+static void restore_colors(struct WINDOW *w) {
 
-    if (w == NULL) {
-        fprintf(stderr, "color not set, window pointer is NULL\n");
-        return -1;
-    }
+    assert(w != NULL);
 
-    //w->fcp.bgcolor = w->winbgcolor;
     memcpy(&w->fcp.bgcolor, &w->winbgcolor, sizeof(ALLEGRO_COLOR));
-    //w->fcp.fgcolor = w->winfgcolor;
     memcpy(&w->fcp.fgcolor, &w->winfgcolor, sizeof(ALLEGRO_COLOR));
-
-    return 0;
 }
 
 // copies the current cursor location to the charcter structure
-// returns 0 if success, otherwise -1
-static int cp_cursorxy_to_charxy(struct WINDOW *w) {
+static void cp_cursorxy_to_charxy(struct WINDOW *w) {
 
-    if (w == NULL) {
-        fprintf(stderr, "cursor position not updated, window pointer is NULL\n");
-        return -1;
-    }
+    assert(w != NULL);
 
     w->c[w->charcnt].x = w->xcursor;
     w->c[w->charcnt].y = w->ycursor;
-    return 0;
 }
 
 // create a window
@@ -77,17 +64,11 @@ struct WINDOW* create_window(ALLEGRO_DISPLAY *display, int width, int height, in
 
     struct WINDOW *p;
 
-    if (width == 0 || height == 0) {
-        fprintf(stderr, "could not create window, width or height is zero\n");
-        return NULL;
-    }
+    assert((width != 0) || (height != 0));
 
     // allocate memory and set it all to zero
     p = calloc(1, sizeof(struct WINDOW));
-    if (p == NULL) {
-        fprintf(stderr, "could not create window\n");
-        return NULL;
-    }
+    assert(p != 0);
 
     p->width = width;
     p->height = height;
@@ -96,10 +77,7 @@ struct WINDOW* create_window(ALLEGRO_DISPLAY *display, int width, int height, in
     al_set_new_window_position(p->winposx, p->winposy);
     al_set_new_display_flags(DEFAULT_WINDOW_FLAGS);
     p->display = al_create_display(p->width,p->height);
-    if (p->display == NULL) {
-        fprintf(stderr, "could not create display\n");
-        return p;
-    }
+    assert(p->display != NULL);
 
     return (struct WINDOW*)p;
 }
@@ -107,9 +85,7 @@ struct WINDOW* create_window(ALLEGRO_DISPLAY *display, int width, int height, in
 // return resource used by window
 void destroy_window(struct WINDOW *w) {
 
-    if (w == NULL) {
-        return;
-    }
+    assert(w != NULL);
 
     // todo - add clearing for graphic bit maps
 
@@ -118,145 +94,86 @@ void destroy_window(struct WINDOW *w) {
 }
 
 // set colors window
-// returns 0 if success, otherwise -1
-int set_window_colors(struct WINDOW *w, ALLEGRO_COLOR bgc, ALLEGRO_COLOR fgc) {
+void set_window_colors(struct WINDOW *w, ALLEGRO_COLOR bgc, ALLEGRO_COLOR fgc) {
 
-    if (w == NULL) {
-        fprintf(stderr, "color not set, window pointer is NULL\n");
-        return -1;
-    }
+    assert(w != NULL);
 
-    //w->winfgcolor = fgc;
     memcpy(&w->winfgcolor, &fgc, sizeof(ALLEGRO_COLOR));
-    //w->winbgcolor = bgc;
     memcpy(&w->winbgcolor, &bgc, sizeof(ALLEGRO_COLOR));
 
     restore_colors(w);
-
-    return 0;
 }
 
 // set the window's blink rate (blink divisor)
-int set_window_blinkrate(struct WINDOW *w, unsigned char bd){
+void set_window_blinkrate(struct WINDOW *w, unsigned char bd){
 
-    if (w == NULL) {
-        return -1;
-    }
-    if (bd > (BLINK_MASK_1 | BLINK_MASK_p50 | BLINK_MASK_p25 | BLINK_MASK_p125)) {
-        return -1;
-    }
+    assert(w != NULL);
+    assert(bd <= (BLINK_MASK_1 | BLINK_MASK_p50 | BLINK_MASK_p25 | BLINK_MASK_p125));
+
     w->blinkdivisor = bd;
-    return 0;
 }
 
 
 // set cursor position (pixels)
-// returns 0 if success, otherwise -1
-int set_window_cursor_posxy(struct WINDOW *w, int x, int y) {
+void set_window_cursor_posxy(struct WINDOW *w, int x, int y) {
 
-    if (w == NULL) {
-        fprintf(stderr, "cusor position not set, window pointer is NULL\n");
-        return -1;
-    }
+    assert(w != NULL);
+
     w->xcursor = (float)x;
     w->ycursor = (float)y;
-    return 0;
 }
 
 // set cursor position (row, col)
 // move cursor to character row and column using the currently selected font
-// returns 0 if success, otherwise -1
-int set_window_cursor_posrc(struct WINDOW *w, int r, int c) {
+void set_window_cursor_posrc(struct WINDOW *w, int r, int c) {
 
-    if (w == NULL) {
-        fprintf(stderr, "cusor position not set, window pointer is NULL\n");
-        return -1;
-    }
+    assert(w != NULL);
 
     w->xcursor = (float)c * get_char_width(w);
     w->ycursor = (float)r * get_char_height(w);
-    return 0;
 }
 
 
 // set tab stops
-// returns 0 if success, otherwise -1
-int set_window_tab_stops(struct WINDOW *w, struct TABS *hts, struct TABS *vts) {
+void set_window_tab_stops(struct WINDOW *w, struct TABS *hts, struct TABS *vts) {
 
-    if (w == NULL) {
-        fprintf(stderr, "window pointer is NULL\n");
-        return -1;
-    }
+    assert(w != NULL);
 
     w->hts = hts;
     w->vts = vts;
-    return 0;
 }
 
 
 // set active font for window
-// returns 0 if success, otherwise -1
-int set_window_font(struct WINDOW *w, struct FONT_LUT *fntlut) {
+void set_window_font(struct WINDOW *w, struct FONT_LUT *fntlut) {
 
-    if (w == NULL) {
-        fprintf(stderr, "font not set, window pointer is NULL\n");
-        return -1;
-    }
-    if (fntlut == NULL) {
-        fprintf(stderr, "font not set, FONT_LUT pointer is NULL\n");
-        return -1;
-    }
+    assert(w != NULL);
+    assert(fntlut != NULL);
 
     w->flut = fntlut;
-    return 0;
 }
 
 // todo set_window_scale? using set_font_scale currently - refactor
 
 // set window defaults
 // returns 0 if success, otherwise -1
-int set_window_defaults(struct WINDOW *w) {
+void set_window_defaults(struct WINDOW *w) {
 
-    int r;
+    assert(w != NULL);
 
-    if (w == NULL) {
-        fprintf(stderr, "window pointer is NULL\n");
-        return -1;
-    }
-    r = set_window_colors(w, DEFAULT_WINDOW_BGCOLOR, DEFAULT_WINDOW_FGCOLOR);
-    if (r == -1) {
-        fprintf(stderr, "could not set window color\n");
-        return -1;
-    }
-    r = set_window_cursor_posxy(w, DEFAULT_WINDOW_HOME_X, DEFAULT_WINDOW_HOME_Y);
-    if (r == -1) {
-        fprintf(stderr, "could not set cursor position\n");
-        return -1;
-    }
-    r = set_window_tab_stops(w, NULL, NULL);
-    if (r == -1) {
-        fprintf(stderr, "could not set tab stops\n");
-        return -1;
-    }
-    r = set_window_blinkrate(w, DEFAULT_WINDOW_BLINKRATE);
-    if (r == -1) {
-        fprintf(stderr, "could not set blink rate\n");
-        return -1;
-    }
+    set_window_colors(w, DEFAULT_WINDOW_BGCOLOR, DEFAULT_WINDOW_FGCOLOR);
+    set_window_cursor_posxy(w, DEFAULT_WINDOW_HOME_X, DEFAULT_WINDOW_HOME_Y);
+    set_window_tab_stops(w, NULL, NULL);
+    set_window_blinkrate(w, DEFAULT_WINDOW_BLINKRATE);
     w->fcp.scale = DEFAULT_WINDOW_SCALE;
     w->fcp.style = DEFAULT_WINDOW_STYLE;
 
-    return 0;
 }
 
 // clear window
-// returns 0 if success, otherwise -1
-int clear_window(struct WINDOW *w) {
+void clear_window(struct WINDOW *w) {
 
-    if (w == NULL) {
-        fprintf(stderr, "window pointer is NULL\n");
-        return -1;
-    }
+    assert(w != NULL);
 
     al_clear_to_color(w->winbgcolor);
 
@@ -271,46 +188,30 @@ int clear_window(struct WINDOW *w) {
 
     // todo - add graphic clearing code here
 
-    return 0;
 }
 
-
 // move cursor to the next new line (carriage return, line feed)
-// returns 0 if success, otherwise -1
-int new_line(struct WINDOW *w) {
+void new_line(struct WINDOW *w) {
 
-    if (w == NULL) {
-        fprintf(stderr, "cursor position not updated, window pointer is NULL\n");
-        return -1;
-    }
+    assert(w != NULL);
 
     w->xcursor = 0;
     w->ycursor += get_char_height(w);
-    return 0;
 }
 
 // move cursor to the start of the current line (carriage return)
-// returns 0 if success, otherwise -1
-int carriage_return(struct WINDOW *w) {
+void carriage_return(struct WINDOW *w) {
 
-    if (w == NULL) {
-        fprintf(stderr, "cursor position not updated, window pointer is NULL\n");
-        return -1;
-    }
+    assert(w != NULL);
 
     w->xcursor = 0;
-    return 0;
 }
 
 // move cursor position one character position forward
 // If LINE_WRAP is enabled, move to the next row when at the right edge of the window
-// returns 0 if success, otherwise -1
-int move_cursor_fwd(struct WINDOW *w) {
+void move_cursor_fwd(struct WINDOW *w) {
 
-    if (w == NULL) {
-        fprintf(stderr, "cursor position not updated, window pointer is NULL\n");
-        return -1;
-    }
+    assert(w != NULL);
 
     // move the cursor in the x direction, the width of the character
     // calculate where to move the cursor
@@ -326,18 +227,13 @@ int move_cursor_fwd(struct WINDOW *w) {
     }
 #endif
 
-    return 0;
 }
 
 // move cursor position one character position backward
 // Stop when we are at the left edge of the window
-// returns 0 if success, otherwise -1
-int move_cursor_bwd(struct WINDOW *w) {
+void move_cursor_bwd(struct WINDOW *w) {
 
-    if (w == NULL) {
-        fprintf(stderr, "cursor position not updated, window pointer is NULL\n");
-        return -1;
-    }
+    assert(w != NULL);
 
     // move the cursor in the x direction, the width of a character
     w->xcursor -= get_char_width(w);
@@ -345,18 +241,13 @@ int move_cursor_bwd(struct WINDOW *w) {
         w->xcursor = 0;
     }
 
-    return 0;
 }
 
 // move cursor position one character position up
 // Stop when we are at the top edge of the window
-// returns 0 if success, otherwise -1
-int move_cursor_up(struct WINDOW *w) {
+void move_cursor_up(struct WINDOW *w) {
 
-    if (w == NULL) {
-        fprintf(stderr, "cursor position not updated, window pointer is NULL\n");
-        return -1;
-    }
+    assert(w != NULL);
 
     // move the cursor in the x direction, the width of a character
     w->ycursor -= get_char_height(w);
@@ -364,23 +255,19 @@ int move_cursor_up(struct WINDOW *w) {
         w->ycursor = 0;
     }
 
-    return 0;
 }
 
 // horizontal tab cursor backwards
-// returns 0 if success, otherwise -1
-int htab_cursor_pos_bwd(struct WINDOW *w, struct TABS *ht) {
+void htab_cursor_pos_bwd(struct WINDOW *w, struct TABS *ht) {
 
     int i;
     float fstop;
 
-    if (w == NULL) {
-        return -1;
-    }
+    assert(w != NULL);
 
     // if no tabs setting, do nothing to cursor position
     if (ht == NULL) {
-        return 0;
+        return;
     }
 
     // tab backwards
@@ -388,30 +275,27 @@ int htab_cursor_pos_bwd(struct WINDOW *w, struct TABS *ht) {
         fstop = get_char_width(w) * (float)w->hts->ts[i];
         if (w->xcursor > fstop) {
             w->xcursor = fstop;
-            return 0;
+            return;
         }
     }
 
     // return cursor to the start of the line
     carriage_return(w);
 
-    return 0;
+    return;
 }
 
 // horizontal tab cursor foward
-// returns 0 if success, otherwise -1
-int htab_cursor_pos_fwd(struct WINDOW *w, struct TABS *ht) {
+void htab_cursor_pos_fwd(struct WINDOW *w, struct TABS *ht) {
 
     int i;
     float fstop;
 
-    if (w == NULL) {
-        return -1;
-    }
+    assert(w != NULL);
 
     // if no tabs setting, do nothing to cursor position
     if (ht == NULL) {
-        return 0;
+        return;
     }
 
     // tab forwards
@@ -419,31 +303,28 @@ int htab_cursor_pos_fwd(struct WINDOW *w, struct TABS *ht) {
         fstop = get_char_width(w) * (float)w->hts->ts[i];
         if (w->xcursor < fstop) {
             w->xcursor = fstop;
-            return 0;
+            return;
         }
     }
 
     // past last tab stop, move cursor to next line
     new_line(w);
 
-    return 0;
+    return;
 }
 
 
 // vertical tab cursor
-// returns 0 if success, otherwise -1
-int vtab_cursor_pos(struct WINDOW *w, struct TABS *vt) {
+void vtab_cursor_pos(struct WINDOW *w, struct TABS *vt) {
 
     int i;
     float fstop;
 
-    if (w == NULL) {
-        return -1;
-    }
+    assert(w != NULL);
 
     // if no tabs setting, do nothing to cursor position
     if (vt == NULL) {
-        return 0;
+        return;
     }
 
     // tab down
@@ -451,23 +332,21 @@ int vtab_cursor_pos(struct WINDOW *w, struct TABS *vt) {
         fstop = get_char_height(w) * (float)w->vts->ts[i];
         if (w->ycursor < fstop) {
             w->ycursor = fstop;
-            return 0;
+            return;
         }
     }
     // past last tab stop
     // todo - do what
 
-    return 0;
+    return;
 }
 
 // delete character at cursor position
-int delete_char(struct WINDOW *w) {
+void delete_char(struct WINDOW *w) {
 
     int i, r;
 
-    if (w == NULL) {
-        return -1;
-    }
+    assert(w != NULL);
 
     for (i = 0; i < w->charcnt; i++) {
         if ((w->c[i].x == w->xcursor) && (w->c[i].y == w->ycursor)) {
@@ -475,7 +354,6 @@ int delete_char(struct WINDOW *w) {
             w->c[i].fr.rec.c = DELETED_CHARACTER;
         }
     }
-    return 0;
 }
 
 // process format effectors
@@ -523,23 +401,12 @@ int dprint(struct WINDOW *w, char *s, unsigned char style) {
     int sl;
     bool tf;;
     int charcnt;
-    //float height, width;
-    //ALLEGRO_COLOR bgc, fgc;
     char t[MAX_PRINT_LINE];
     char c;
 
-    if (w == NULL) {
-        fprintf(stderr, "print error, window pointer is NULL\n");
-        return -1;
-    }
-    if (s == NULL) {
-        fprintf(stderr, "print error, string pointer is NULL\n");
-        return -1;
-    }
-    if (w->charcnt == MAX_CHARS_IN_WINDOW) {
-        fprintf(stderr, "window full, exceeds max chars in window, nothing added\n");
-        return -1;
-    }
+    assert(w != NULL);
+    assert(s != NULL);
+    assert(w->charcnt < MAX_CHARS_IN_WINDOW);
 
     sl = strnlen(s, MAX_PRINT_LINE);
     memcpy(t,s,sl);
@@ -555,10 +422,6 @@ int dprint(struct WINDOW *w, char *s, unsigned char style) {
             continue;
         }
 
-        //height = w->height;
-        //width = w->width;
-        //bgc = w->fcp.bgcolor;
-        //fgc = w->fcp.fgcolor;
         charcnt = w->charcnt;
 
         r = get_font_record(c, w->flut, &w->c[charcnt].fr);
@@ -567,36 +430,12 @@ int dprint(struct WINDOW *w, char *s, unsigned char style) {
             return -1;
         }
 
-        r = set_font_color(&w->c[charcnt].fcp, w->fcp.bgcolor, w->fcp.fgcolor);
-//        r = set_font_color(&w->c[charcnt].fcp, bgc, fgc);
-        if (r == -1) {
-            printf("could not set font parmaters\n");
-            return -1;
-        }
+        set_font_color(&w->c[charcnt].fcp, w->fcp.bgcolor, w->fcp.fgcolor);
+        set_font_scale(&w->c[charcnt].fcp, DEFAULT_WINDOW_SCALE);
+        set_font_style(&w->c[charcnt].fcp, style);
 
-        r = set_font_scale(&w->c[charcnt].fcp, DEFAULT_WINDOW_SCALE);
-        if (r == -1) {
-            printf("could not set font parmaters\n");
-            return -1;
-        }
-
-        r = set_font_style(&w->c[charcnt].fcp, style);
-        if (r == -1) {
-            printf("could not set font parmaters\n");
-            return -1;
-        }
-
-        r = cp_cursorxy_to_charxy(w);
-        if (r == -1) {
-            printf("could not copy cursor position\n");
-            return -1;
-        }
-
-        r = move_cursor_fwd(w);
-        if (r == -1) {
-            printf("could not update cursor position\n");
-            return -1;
-        }
+        cp_cursorxy_to_charxy(w);
+        move_cursor_fwd(w);
         w->charcnt++;
     }
     return 0;
@@ -606,17 +445,14 @@ int dprint(struct WINDOW *w, char *s, unsigned char style) {
 // window update
 // place in a thread so it is called repeatively, at a known rate
 // only need one of these for multiple windows
-int window_update(struct WINDOW *w) {
+void window_update(struct WINDOW *w) {
 
     int i;
     int r;
     float x, y;
     struct POSITION pos;
 
-    if (w == NULL) {
-        fprintf(stderr, "update error, window pointer is NULL\n");
-        return -1;
-    }
+    assert(w != NULL);
 
     // increment blink counter
     update_blink_counter(w);
@@ -641,11 +477,7 @@ int window_update(struct WINDOW *w) {
 
                     pos.x0 = x;
                     pos.y0 = y;
-                    r = make_character(&w->c[i].fr, &w->c[i].fcp, &pos);
-                    if (r == -1) {
-                        printf("could not make character\n");
-                        return -1;
-                    }
+                    make_character(&w->c[i].fr, &w->c[i].fcp, &pos);
                 }
             }
         }
