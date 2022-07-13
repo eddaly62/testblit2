@@ -21,10 +21,10 @@
 #include "textproc.h"
 
 // window size and location
-#define WIN_WIDTH   512
-#define WIN_HEIGHT  700
-#define WIN_LOC_X   400
-#define WIN_LOC_Y   10
+#define WIN_WIDTH   1024
+#define WIN_HEIGHT  768
+#define WIN_LOC_X   20
+#define WIN_LOC_Y   20
 #define HOME_X      0
 #define HOME_Y      0
 
@@ -172,6 +172,8 @@ int main()  {
     dprint(win, "0123456789\n", INVERT);
     dprint(win, " !\"#$%&'()*+,-./\n", INVERT);
     dprint(win, "abcdefghijklmnopqrstuvwxyz\n", INVERT);
+    move_cursor_up(win);
+    delete_line(win);
     dprint(win, ":;<=>?@\n", INVERT);
     dprint(win, "ABCDEFGHIJKLMNOPQRSTUVWXYZ\n", INVERT);
     dprint(win, "[\\]^_`{|}~\177\n\n\r", INVERT);
@@ -202,12 +204,19 @@ int main()  {
     move_cursor_up(win);
     dprint(win, "0123456789\n", NO_STYLE);
 
-    set_window_cursor_posrc(win, 3, 10);
+    set_window_cursor_posrc(win, 3, 30);
     dprint(win, "0123456789", NO_STYLE);
     move_cursor_bwd(win);
     move_cursor_bwd(win);
     delete_char(win);
+    move_cursor_up(win);
+    insert_line(win);
 
+    set_window_cursor_posrc(win, 7, 50);
+    dprint(win, "0123456789", NO_STYLE);
+    move_cursor_bwd(win);
+    move_cursor_bwd(win);
+    insert_char(win);
 
     while (running) {
 

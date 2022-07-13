@@ -249,8 +249,7 @@ void make_character(struct FONT_REC *fr, struct FONT_CHAR_PARAM *fcp, struct POS
 
                 default:
                 // print unknown pixel type, fill with background color
-                color = fcp->bgcolor;
-                al_draw_filled_rectangle(x0, y0, x1, y1, color);
+                al_draw_filled_rectangle(x0, y0, x1, y1, fcp->bgcolor);
                 break;
             }
             // index to the next pixel

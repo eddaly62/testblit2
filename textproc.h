@@ -10,28 +10,28 @@ extern "C" {
 #include <allegro5/allegro.h>
 
 // color definitions
-#define BLACK   (al_map_rgb(0, 0, 0))
-#define WHITE   (al_map_rgb(200, 200, 200))
-#define RED     (al_map_rgb(255, 0, 0))
-#define BLUE    (al_map_rgb(0, 0, 255))
-#define GREEN   (al_map_rgb(0, 255, 0))
+#define BLACK       (al_map_rgb(0, 0, 0))
+#define WHITE       (al_map_rgb(200, 200, 200))
+#define RED         (al_map_rgb(255, 0, 0))
+#define BLUE        (al_map_rgb(0, 0, 255))
+#define GREEN       (al_map_rgb(0, 255, 0))
 // retro colors of older terminals
-#define AMBER   (al_map_rgb(255,176,0))
+#define AMBER       (al_map_rgb(255,176,0))
 #define LT_AMBER    (al_map_rgb(255,204,0))
-#define APPLE2  (al_map_rgb(51,255,51))
-#define APPLE2C (al_map_rgb(102,255,102))
-#define GREEN1  (al_map_rgb(51,255,0))
-#define GREEN2  (al_map_rgb(0,255,51))
-#define GREEN3  (al_map_rgb(0,255,102))
+#define APPLE2      (al_map_rgb(51,255,51))
+#define APPLE2C     (al_map_rgb(102,255,102))
+#define GREEN1      (al_map_rgb(51,255,0))
+#define GREEN2      (al_map_rgb(0,255,51))
+#define GREEN3      (al_map_rgb(0,255,102))
 
 // window defaults
-#define DEFAULT_WINDOW_BGCOLOR  BLACK
-#define DEFAULT_WINDOW_FGCOLOR  LT_AMBER
-#define DEFAULT_WINDOW_HOME_X   0
-#define DEFAULT_WINDOW_HOME_Y   0
-#define DEFAULT_WINDOW_SCALE    2
-#define DEFAULT_WINDOW_STYLE    NO_STYLE
-#define DEFAULT_WINDOW_BLINKRATE BLINK_MASK_1
+#define DEFAULT_WINDOW_BGCOLOR      BLACK
+#define DEFAULT_WINDOW_FGCOLOR      LT_AMBER
+#define DEFAULT_WINDOW_HOME_X       0
+#define DEFAULT_WINDOW_HOME_Y       0
+#define DEFAULT_WINDOW_SCALE        2
+#define DEFAULT_WINDOW_STYLE        NO_STYLE
+#define DEFAULT_WINDOW_BLINKRATE    BLINK_MASK_1
 
 // maximum number of character in a font file
 #define MAX_FONT_GLYPHS  128
@@ -187,11 +187,13 @@ void carriage_return(struct WINDOW *w);
 void move_cursor_fwd(struct WINDOW *w);
 void move_cursor_bwd(struct WINDOW *w);
 void move_cursor_up(struct WINDOW *w);
+void delete_line(struct WINDOW *w);
+void insert_line(struct WINDOW *w);
 void htab_cursor_pos_fwd(struct WINDOW *w, struct TABS *ht);
 void htab_cursor_pos_bwd(struct WINDOW *w, struct TABS *ht);
 void vtab_cursor_pos(struct WINDOW *w, struct TABS *vt);
 void delete_char(struct WINDOW *w);
-bool proc_format_effectors(struct WINDOW *w, char c);
+void insert_char(struct WINDOW *w);
 int dprint(struct WINDOW *w, char *s, unsigned char style);
 void window_update(struct WINDOW *w);
 void destroy_window(struct WINDOW *w);

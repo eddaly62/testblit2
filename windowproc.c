@@ -257,6 +257,49 @@ void move_cursor_up(struct WINDOW *w) {
 
 }
 
+// delete current line
+void delete_line(struct WINDOW *w) {
+
+    int i;
+
+    assert(w != NULL);
+
+    // mark all characters on current line that cursor is on deleted
+    for (i = 0; i < w->charcnt; i++) {
+        if (w->ycursor == w->c[i].y) {
+            w->c[i].fr.rec.c = DELETED_CHARACTER;
+        }
+    }
+
+    // move position of all lines to fill the line that was just deleted
+    for (i = 0; i < w->charcnt; i++) {
+        if (w->c[i].y > w->ycursor) {
+            w->c[i].y -= get_char_height(w);
+            assert(w->c[i].y > 0);
+        }
+    }
+}
+
+// insert line at cursor location
+void insert_line(struct WINDOW *w) {
+
+    int i;
+
+    assert(w != NULL);
+
+    // move position of characters starting at cursor position one line height
+    // lines that get positioned below the bottom of the display
+    // will be not be viewable and are not displayed but they are there in case
+    // scrolling is performed they will become viewable.
+    for (i = 0; i < w->charcnt; i++) {
+        if (w->c[i].y >= w->ycursor) {
+            w->c[i].y += get_char_height(w);
+        }
+    }
+}
+
+
+
 // horizontal tab cursor backwards
 void htab_cursor_pos_bwd(struct WINDOW *w, struct TABS *ht) {
 
@@ -344,7 +387,7 @@ void vtab_cursor_pos(struct WINDOW *w, struct TABS *vt) {
 // delete character at cursor position
 void delete_char(struct WINDOW *w) {
 
-    int i, r;
+    int i;
 
     assert(w != NULL);
 
@@ -356,9 +399,24 @@ void delete_char(struct WINDOW *w) {
     }
 }
 
+// insert character at cursor position
+void insert_char(struct WINDOW *w) {
+
+    int i;
+
+    assert(w != NULL);
+
+    for (i = 0; i < w->charcnt; i++) {
+        if ((w->c[i].x >= w->xcursor) && (w->c[i].y == w->ycursor)) {
+            // move character positions to the right
+            w->c[i].x += get_char_width(w);
+        }
+    }
+}
+
 // process format effectors
 // returns true if a format effector was processed, otherwise false
-bool proc_format_effectors(struct WINDOW *w, char c) {
+static bool proc_format_effectors(struct WINDOW *w, char c) {
 
     // process escape sequences
     if (c == '\n') {
